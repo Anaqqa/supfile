@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: supfile_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-supfile_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-supfile_password}
+      POSTGRES_DB: ${POSTGRES_DB:-supfile_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - supfile_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-supfile_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: supfile_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-supfile_user}:${POSTGRES_PASSWORD:-supfile_password}@postgres:5432/${POSTGRES_DB:-supfile_db}
+      SECRET_KEY: ${SECRET_KEY:-dev_secret_key_change_in_production}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+      UPLOAD_DIR: /app/uploads
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-5368709120}
+      STORAGE_QUOTA: ${STORAGE_QUOTA:-32212254720}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - supfile_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    container_name: supfile_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - supfile_network
+
+volumes:
+  postgres_data:
+    driver: local
+    name: supfile_postgres_data
+  uploads_data:
+    driver: local
+    name: supfile_uploads_data
+
+networks:
+  supfile_network:
+    driver: bridge
+    name: supfile_network
