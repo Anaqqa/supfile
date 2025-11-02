@@ -21,4 +21,9 @@ def get_db():
         db.close()
 
 def init_db():
+    from app.models.user import User
+    from app.models.file import File
+    from app.models.folder import Folder
+    from app.models.share import Share
+    
     Base.metadata.create_all(bind=engine)
