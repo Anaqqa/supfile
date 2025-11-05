@@ -1,25 +1,66 @@
-import { BrowserRouter as Router } from 'react-router-dom'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './contexts/AuthContext';
+import Home from './pages/Home';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import Dashboard from './pages/Dashboard';
+import Settings from './pages/Settings';
+import AuthCallback from './components/Auth/AuthCallback';
+import MainLayout from './components/Layout/MainLayout';
+import './App.css';
+
+const PrivateRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return <div>Chargement...</div>;
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  
+  return children;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      
+      <Route path="/dashboard" element={
+        <PrivateRoute>
+          <MainLayout>
+            <Dashboard />
+          </MainLayout>
+        </PrivateRoute>
+      } />
+      
+      <Route path="/settings" element={
+        <PrivateRoute>
+          <MainLayout>
+            <Settings />
+          </MainLayout>
+        </PrivateRoute>
+      } />
+      
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
     <Router>
-      <div className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
-        <div className="text-center">
-          <h1 className="display-4 text-primary mb-4">
-            <i className="bi bi-cloud-arrow-up"></i> SUPFile
-          </h1>
-          <p className="lead text-muted">
-            Cloud Storage Platform
-          </p>
-          <div className="alert alert-success mt-4" role="alert">
-            <i className="bi bi-check-circle"></i> Application en cours de développement
-          </div>
-          <small className="text-muted">Architecture 3-tiers opérationnelle</small>
-        </div>
-      </div>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

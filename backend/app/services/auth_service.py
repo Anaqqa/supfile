@@ -30,7 +30,8 @@ class AuthService:
             is_active=True,
             is_verified=False,
             storage_used=0,
-            storage_quota=32212254720
+            storage_quota=32212254720,
+            oauth_provider="local"
         )
         
         db.add(new_user)
@@ -88,3 +89,50 @@ class AuthService:
     def get_user_by_id(db: Session, user_id: int):
         from app.models.user import User
         return db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    
+    @staticmethod
+    def login_with_google(db: Session, userinfo: dict) -> dict:
+        from app.models.user import User
+        from app.utils.security import create_access_token
+
+        email = userinfo.get("email")
+        full_name = userinfo.get("name")
+        provider_id = userinfo.get("id")
+
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Impossible de récupérer l'email Google"
+            )
+
+        user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
+
+        if not user:
+            user = User(
+                email=email,
+                full_name=full_name,
+                hashed_password=None,
+                is_active=True,
+                is_verified=True,
+                storage_used=0,
+                storage_quota=32212254720,
+                oauth_provider="google",
+                oauth_provider_id=provider_id
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "full_name": user.full_name,
+                "storage_used": user.storage_used,
+                "storage_quota": user.storage_quota
+            }
+        }

@@ -25,8 +25,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     
     to_encode.update({"exp": expire})
     
-    print(f"🔑 Creating token with data: {to_encode}")
-    print(f"🔑 SECRET_KEY: {settings.SECRET_KEY[:10]}...")
+    print(f"Creating token with data: {to_encode}")
+    print(f"SECRET_KEY: {settings.SECRET_KEY[:10]}...")
     
     encoded_jwt = jwt.encode(
         to_encode, 
@@ -39,9 +39,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def decode_access_token(token: str) -> Optional[dict]:
     """Décode un token JWT et retourne les données"""
     try:
-        print(f"🔓 Decoding token: {token[:30]}...")
-        print(f"🔓 SECRET_KEY: {settings.SECRET_KEY[:10]}...")
-        print(f"🔓 ALGORITHM: {settings.ALGORITHM}")
+        print(f"Decoding token: {token[:30]}...")
+        print(f"SECRET_KEY: {settings.SECRET_KEY[:10]}...")
+        print(f"ALGORITHM: {settings.ALGORITHM}")
         
         payload = jwt.decode(
             token, 
@@ -49,11 +49,11 @@ def decode_access_token(token: str) -> Optional[dict]:
             algorithms=[settings.ALGORITHM]
         )
         
-        print(f"✅ Token decoded successfully: {payload}")
+        print(f"Token decoded successfully: {payload}")
         return payload
     except JWTError as e:
-        print(f"❌ JWT Error: {type(e).__name__}: {e}")
+        print(f"JWT Error: {type(e).__name__}: {e}")
         return None
     except Exception as e:
-        print(f"❌ Unexpected error: {type(e).__name__}: {e}")
+        print(f"Unexpected error: {type(e).__name__}: {e}")
         return None
