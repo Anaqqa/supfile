@@ -3,6 +3,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.config import settings
+import os
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -25,9 +26,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     
     to_encode.update({"exp": expire})
     
-    print(f"Creating token with data: {to_encode}")
-    print(f"SECRET_KEY: {settings.SECRET_KEY[:10]}...")
-    
     encoded_jwt = jwt.encode(
         to_encode, 
         settings.SECRET_KEY, 
@@ -39,21 +37,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def decode_access_token(token: str) -> Optional[dict]:
     """Décode un token JWT et retourne les données"""
     try:
-        print(f"Decoding token: {token[:30]}...")
-        print(f"SECRET_KEY: {settings.SECRET_KEY[:10]}...")
-        print(f"ALGORITHM: {settings.ALGORITHM}")
-        
         payload = jwt.decode(
             token, 
             settings.SECRET_KEY, 
             algorithms=[settings.ALGORITHM]
         )
         
-        print(f"Token decoded successfully: {payload}")
         return payload
-    except JWTError as e:
-        print(f"JWT Error: {type(e).__name__}: {e}")
+    except JWTError:
         return None
-    except Exception as e:
-        print(f"Unexpected error: {type(e).__name__}: {e}")
-        return None
+    
+def create_folder_structure(folder_path: str) -> None:
+    """Crée une structure de dossiers récursivement"""
+    os.makedirs(folder_path, exist_ok=True)
