@@ -3,7 +3,6 @@ import { Modal, Button, Spinner, Alert } from 'react-bootstrap';
 import { api } from '../../services/api';
 import { PREVIEW_TYPES } from '../../config';
 import { fileService } from '../../services/fileService';
-import { API_URL } from '../../config';
 
 const FilePreview = ({ show, onHide, file, onDownload }) => {
   const [loading, setLoading] = useState(false);
@@ -21,7 +20,18 @@ const FilePreview = ({ show, onHide, file, onDownload }) => {
     }
   }, [file, show]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const resetPreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setPreviewUrl(null);
     setPreviewContent(null);
     setLoading(false);
@@ -37,7 +47,6 @@ const FilePreview = ({ show, onHide, file, onDownload }) => {
     setError(null);
 
     try {
-
       const type = determinePreviewType(file.mime_type);
       setPreviewType(type);
 
@@ -49,36 +58,89 @@ const FilePreview = ({ show, onHide, file, onDownload }) => {
 
       setIsPreviewable(true);
 
-
-      if (['image', 'video', 'pdf'].includes(type)) {
-        setPreviewUrl(`${API_URL}/files/${file.id}/preview`);
-        setLoading(false);
-        return;
+      if (type === 'image') {
+        try {
+          const response = await api.get(`/files/${file.id}/preview`, {
+            responseType: 'blob'
+          });
+          
+          const blob = new Blob([response.data], { type: file.mime_type });
+          const blobUrl = URL.createObjectURL(blob);
+          setPreviewUrl(blobUrl);
+          setLoading(false);
+          return;
+        } catch (err) {
+          console.error('Erreur image:', err);
+          setError('Impossible de charger l\'image.');
+          setLoading(false);
+          return;
+        }
       }
 
+      if (type === 'video') {
+        try {
+          const response = await api.get(`/files/${file.id}/preview`, {
+            responseType: 'blob'
+          });
+          
+          const blob = new Blob([response.data], { type: file.mime_type });
+          const blobUrl = URL.createObjectURL(blob);
+          setPreviewUrl(blobUrl);
+          setLoading(false);
+          return;
+        } catch (err) {
+          console.error('Erreur vidéo:', err);
+          setError('Impossible de charger la vidéo.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (type === 'pdf') {
+        try {
+          const response = await api.get(`/files/${file.id}/preview`, {
+            responseType: 'blob'
+          });
+          
+          const blob = new Blob([response.data], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(blob);
+          setPreviewUrl(blobUrl);
+          setLoading(false);
+          return;
+        } catch (err) {
+          console.error('Erreur PDF:', err);
+          setError('Impossible de charger le PDF.');
+          setLoading(false);
+          return;
+        }
+      }
 
       if (type === 'text') {
-        const response = await api.get(`/files/${file.id}/preview`, {
-          responseType: 'blob'
-        });
+        try {
+          const response = await api.get(`/files/${file.id}/preview`, {
+            responseType: 'blob'
+          });
 
-        const text = await response.data.text();
-        setPreviewContent(text);
-        setLoading(false);
-        return;
+          const text = await response.data.text();
+          setPreviewContent(text);
+          setLoading(false);
+          return;
+        } catch (err) {
+          console.error('Erreur texte:', err);
+          setError('Impossible de charger le fichier texte.');
+          setLoading(false);
+          return;
+        }
       }
-
 
       setIsPreviewable(false);
 
     } catch (err) {
       console.error('Erreur lors du chargement de la prévisualisation:', err);
       setError('Impossible de charger la prévisualisation.');
-    } finally {
       setLoading(false);
     }
   };
-
 
   const determinePreviewType = (mimeType) => {
     if (!mimeType) return 'none';

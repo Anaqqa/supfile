@@ -79,6 +79,7 @@ const FileExplorer = () => {
   const handleDelete = async (item, isFolder) => {
     if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${isFolder ? 'ce dossier' : 'ce fichier'} ?`)) {
       await deleteItem(item.id, isFolder);
+      await fetchContents(currentFolder?.id || null);
     }
   };
 

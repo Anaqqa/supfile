@@ -184,7 +184,7 @@ class FileService:
                 os.remove(file.storage_path)
                 
             user = db.execute(select(User).where(User.id == user_id)).scalar_one()
-            user.storage_used -= file.size
+            user.storage_used = max(0, user.storage_used - file.size)
                 
             db.delete(file)
         else:
@@ -200,15 +200,26 @@ class FileService:
         Restaure un fichier depuis la corbeille
         """
         file = db.execute(
-            select(FileModel).where(
-                FileModel.id == file_id,
-                FileModel.user_id == user_id,
-                FileModel.is_deleted == True
+            select(File).where(
+                File.id == file_id,
+                File.user_id == user_id,
+                File.is_deleted == True
             )
         ).scalar_one_or_none()
         
         if not file:
             return False
+        
+        if file.folder_id:
+            folder = db.execute(
+                select(Folder).where(
+                    Folder.id == file.folder_id,
+                    Folder.is_deleted == False
+                )
+            ).scalar_one_or_none()
+            
+            if not folder:
+                file.folder_id = None
         
         file.is_deleted = False
         file.deleted_at = None
@@ -247,7 +258,7 @@ class FileService:
         
         if space_freed > 0:
             user = db.execute(select(User).where(User.id == user_id)).scalar_one()
-            user.storage_used -= space_freed
+            user.storage_used = max(0, user.storage_used - space_freed)
             
         db.commit()
         

@@ -60,10 +60,9 @@ const Trash = () => {
   const handleDelete = async (itemId, isFolder) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer définitivement cet élément ?')) {
       await deleteItem(itemId, isFolder, true); 
-      loadTrashedItems();
+      await loadTrashedItems();  
     }
   };
-
   const handleEmptyTrash = async () => {
     setIsEmptying(true);
     try {

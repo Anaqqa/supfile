@@ -288,12 +288,21 @@ export const fileService = {
   },
 
   emptyTrash: async () => {
-    try {
-      const response = await api.post('/trash/empty');
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors du vidage de la corbeille:', error);
-      throw error;
+  try {
+    const trashedFiles = await fileService.getTrashedFiles();
+    for (const file of trashedFiles) {
+      await fileService.deleteFile(file.id, true); 
     }
+    
+    const trashedFolders = await fileService.getTrashedFolders();
+    for (const folder of trashedFolders) {
+      await fileService.deleteFolder(folder.id, true); 
+    }
+    
+    return { message: 'Corbeille vidée avec succès' };
+  } catch (error) {
+    console.error('Erreur lors du vidage de la corbeille:', error);
+    throw error;
   }
+}
 };
