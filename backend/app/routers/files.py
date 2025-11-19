@@ -199,3 +199,26 @@ async def preview_file(
         path=filepath,
         media_type=file.mime_type
     )
+
+@router.get("/search")
+async def search_items(
+    q: str,
+    folder_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Rechercher des fichiers et dossiers par nom
+    
+    - **q**: Terme de recherche
+    - **folder_id**: Limiter la recherche à un dossier (optionnel)
+    """
+    from app.services.folder_service import FolderService
+    
+    files = await FileService.search_files(db, current_user.id, q, folder_id)
+    folders = await FolderService.search_folders(db, current_user.id, q, folder_id)
+    
+    return {
+        "files": files,
+        "folders": folders
+    }

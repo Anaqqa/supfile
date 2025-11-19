@@ -406,3 +406,20 @@ class FolderService:
             
             
             await FolderService._restore_contents_recursive(db, subfolder.id)
+    
+    @staticmethod
+    async def search_folders(db: Session, user_id: int, search_term: str, folder_id: int = None):
+        """
+        Recherche des dossiers par nom
+        """
+        query = select(Folder).where(
+            Folder.user_id == user_id,
+            Folder.is_deleted == False,
+            Folder.name.ilike(f"%{search_term}%")
+        )
+        
+        if folder_id is not None:
+            query = query.where(Folder.parent_id == folder_id)
+            
+        folders = db.execute(query).scalars().all()
+        return folders

@@ -9,6 +9,7 @@ import Loading from '../Shared/Loading';
 import ErrorMessage from '../Shared/ErrorMessage';
 import CreateFolderModal from './CreateFolderModal';
 import RenameModal from './RenameModal';
+import MoveModal from './MoveModal'; 
 
 const FileExplorer = () => {
   const navigate = useNavigate();
@@ -27,6 +28,8 @@ const FileExplorer = () => {
   const [itemToRename, setItemToRename] = useState(null);
   const [filteredItems, setFilteredItems] = useState({ files: [], folders: [] });
   const [breadcrumbs, setBreadcrumbs] = useState([]);
+  const [showMoveModal, setShowMoveModal] = useState(false);        
+  const [itemToMove, setItemToMove] = useState(null);  
 
   
   useEffect(() => {
@@ -91,9 +94,23 @@ const FileExplorer = () => {
     }
   };
 
+  const handleMove = async (newFolderId) => {
+    if (itemToMove) {
+      await moveItem(itemToMove.id, newFolderId, itemToMove.isFolder);
+      setShowMoveModal(false);
+      setItemToMove(null);
+      await fetchContents(currentFolder?.id || null);
+    }
+  };
+
   const openRenameModal = (item, isFolder) => {
     setItemToRename({ ...item, isFolder });
     setShowRenameModal(true);
+  };
+
+  const openMoveModal = (item, isFolder) => {
+    setItemToMove({ ...item, isFolder });
+    setShowMoveModal(true);
   };
 
   const handleSearch = (e) => {
@@ -205,6 +222,9 @@ const FileExplorer = () => {
                         <Dropdown.Item onClick={() => openRenameModal(folder, true)}>
                           <i className="bi bi-pencil me-2"></i> Renommer
                         </Dropdown.Item>
+                        <Dropdown.Item onClick={() => openMoveModal(folder, true)}> 
+                          <i className="bi bi-folder-symlink me-2"></i> Déplacer
+                        </Dropdown.Item>  
                         <Dropdown.Item onClick={() => downloadFolder(folder.id)}>
                           <i className="bi bi-download me-2"></i> Télécharger (ZIP)
                         </Dropdown.Item>
@@ -254,6 +274,9 @@ const FileExplorer = () => {
                         <Dropdown.Item onClick={() => openRenameModal(file, false)}>
                           <i className="bi bi-pencil me-2"></i> Renommer
                         </Dropdown.Item>
+                        <Dropdown.Item onClick={() => openMoveModal(file, false)}> 
+                          <i className="bi bi-folder-symlink me-2"></i> Déplacer
+                        </Dropdown.Item>
                         <Dropdown.Divider />
                         <Dropdown.Item 
                           className="text-danger"
@@ -285,7 +308,13 @@ const FileExplorer = () => {
         initialName={itemToRename?.name || ''} 
         itemType={itemToRename?.isFolder ? 'dossier' : 'fichier'} 
       />
-
+      <MoveModal
+        show={showMoveModal}
+        onHide={() => setShowMoveModal(false)}
+        onMove={handleMove}
+        item={itemToMove}
+        itemType={itemToMove?.isFolder ? 'dossier' : 'fichier'}
+      />
       <FilePreview 
         show={showPreview} 
         onHide={() => setShowPreview(false)} 

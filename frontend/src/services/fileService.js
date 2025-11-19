@@ -248,7 +248,7 @@ export const fileService = {
   
   searchItems: async (searchTerm, folderId = null) => {
     try {
-      const response = await api.get('/search', {
+      const response = await api.get('/files/search', {
         params: { q: searchTerm, folder_id: folderId }
       });
       return response.data;
