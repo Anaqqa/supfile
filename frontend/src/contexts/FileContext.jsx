@@ -285,14 +285,6 @@ export const FileProvider = ({ children }) => {
   }, [refresh]);
 
   
-  useEffect(() => {
-    if (currentFolder) {
-      fetchContents(currentFolder.id);
-    } else {
-      fetchContents(null);
-    }
-  }, [refreshTrigger, fetchContents, currentFolder]);
-
   const value = {
     files,
     folders,

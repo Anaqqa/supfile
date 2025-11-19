@@ -51,7 +51,7 @@ const MoveModal = ({ show, onHide, onMove, item, itemType }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    onMove(selectedFolderId === 'root' ? null : selectedFolderId);
+    onMove(selectedFolderId === 'root' ? 0 : selectedFolderId);
     setSelectedFolderId(null);
   };
 

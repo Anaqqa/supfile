@@ -43,14 +43,16 @@ async def get_folders(
     - **show_deleted**: Inclure les dossiers dans la corbeille
     """
     query = select(Folder).where(Folder.user_id == current_user.id)
-    if show_deleted:   
+    
+    if show_deleted:
         query = query.where(Folder.is_deleted == True)
     else:
         query = query.where(Folder.is_deleted == False)
-    if parent_id is not None:
-        query = query.where(Folder.parent_id == parent_id)
-    else:
-        query = query.where(Folder.parent_id.is_(None))
+        
+        if parent_id is not None:
+            query = query.where(Folder.parent_id == parent_id)
+        else:
+            query = query.where(Folder.parent_id.is_(None))
     
     folders = db.execute(query).scalars().all()
     return folders

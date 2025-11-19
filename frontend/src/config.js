@@ -9,5 +9,5 @@ export const PREVIEW_TYPES = {
   IMAGES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   VIDEOS: ['video/mp4', 'video/webm'],
   DOCUMENTS: ['application/pdf'],
-  TEXT: ['text/plain', 'text/markdown'],
+  TEXT: ['text/plain', 'text/markdown', 'text/x-markdown', 'application/x-markdown'],
 };

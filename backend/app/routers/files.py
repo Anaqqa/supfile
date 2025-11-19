@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse as FastAPIFileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List, Optional
@@ -46,12 +46,11 @@ async def get_files(
     else:
         
         query = query.where(FileModel.is_deleted == False)
-    
-    if folder_id is not None:
-        query = query.where(FileModel.folder_id == folder_id)
-    else:
         
-        query = query.where(FileModel.folder_id.is_(None))
+        if folder_id is not None:
+            query = query.where(FileModel.folder_id == folder_id)
+        else:
+            query = query.where(FileModel.folder_id.is_(None))
     
     files = db.execute(query).scalars().all()
     return files
@@ -164,7 +163,7 @@ async def download_file(
             detail="Fichier non trouvé sur le serveur"
         )
     
-    return FileResponse(
+    return FastAPIFileResponse(  # ← CHANGE ICI
         path=filepath,
         filename=file.original_name,
         media_type=file.mime_type
@@ -195,7 +194,7 @@ async def preview_file(
             detail="Fichier non trouvé sur le serveur"
         )
     
-    return FileResponse(
+    return FastAPIFileResponse(  # ← CHANGE ICI
         path=filepath,
         media_type=file.mime_type
     )
