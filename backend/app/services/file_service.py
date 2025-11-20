@@ -60,7 +60,18 @@ class FileService:
             content = await file.read()
             await f.write(content)
         
-        mime_type = magic.from_file(file_path, mime=True)
+        file_extension = os.path.splitext(file.filename)[1].lower()
+
+        mime_type_map = {
+            '.md': 'text/markdown',
+            '.markdown': 'text/markdown',
+            '.txt': 'text/plain',
+        }
+
+        if file_extension in mime_type_map:
+            mime_type = mime_type_map[file_extension]
+        else:
+            mime_type = magic.from_file(file_path, mime=True)
         
         db_file = File(
             name=file.filename,

@@ -214,12 +214,29 @@ export const fileService = {
     }
   },
 
-  downloadFolder: (folderId) => {
+  downloadFolder: async (folderId) => {
     try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/folders/${folderId}/download`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
-      const downloadUrl = `${API_URL}/folders/${folderId}/download`;
-      console.log("Téléchargement du dossier depuis:", downloadUrl);
-      window.open(downloadUrl, '_blank');
+      if (!response.ok) throw new Error('Erreur de téléchargement');
+      
+      const blob = await response.blob();
+      const filename = response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `folder-${folderId}.zip`;
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
       return true;
     } catch (error) {
       console.error('Erreur lors du téléchargement du dossier:', error);
