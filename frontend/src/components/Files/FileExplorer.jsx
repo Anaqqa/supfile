@@ -95,13 +95,14 @@ const FileExplorer = () => {
   };
 
   const handleMove = async (newFolderId) => {
-    if (itemToMove) {
-      await moveItem(itemToMove.id, newFolderId, itemToMove.isFolder);
-      setShowMoveModal(false);
-      setItemToMove(null);
-      await fetchContents(currentFolder?.id || null);
-    }
-  };
+  
+  if (itemToMove) {
+    await moveItem(itemToMove.id, newFolderId, itemToMove.isFolder);
+    setShowMoveModal(false);
+    setItemToMove(null);
+    await fetchContents(currentFolder?.id || null);
+  }
+};
 
   const openRenameModal = (item, isFolder) => {
     setItemToRename({ ...item, isFolder });

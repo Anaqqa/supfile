@@ -50,8 +50,10 @@ const MoveModal = ({ show, onHide, onMove, item, itemType }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    onMove(selectedFolderId === 'root' ? 0 : selectedFolderId);
+        
+    const targetFolder = (selectedFolderId === null || selectedFolderId === 'root') ? 0 : parseInt(selectedFolderId);
+        
+    onMove(targetFolder);
     setSelectedFolderId(null);
   };
 
@@ -73,8 +75,8 @@ const MoveModal = ({ show, onHide, onMove, item, itemType }) => {
             <Form.Group>
               <Form.Label>Destination</Form.Label>
               <Form.Select
-                value={selectedFolderId || 'root'}
-                onChange={(e) => setSelectedFolderId(e.target.value === 'root' ? 'root' : parseInt(e.target.value))}
+                value={selectedFolderId || 'root'} 
+                onChange={(e) => setSelectedFolderId(e.target.value === 'root' ? null : e.target.value)}
                 required
               >
                 <option value="root">📁 Racine</option>
