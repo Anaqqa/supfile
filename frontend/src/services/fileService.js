@@ -100,18 +100,35 @@ export const fileService = {
     }
   },
 
-  downloadFile: (fileId) => {
-    try {
-      
-      const downloadUrl = `${API_URL}/files/${fileId}/download`;
-      console.log("Téléchargement depuis:", downloadUrl);
-      window.open(downloadUrl, '_blank');
-      return true;
-    } catch (error) {
-      console.error('Erreur lors du téléchargement du fichier:', error);
-      return false;
-    }
-  },
+  downloadFile: async (fileId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/files/${fileId}/download`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) throw new Error('Erreur de téléchargement');
+    
+    const blob = await response.blob();
+    const filename = response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `file-${fileId}`;
+    
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    return true;
+  } catch (error) {
+    console.error('Erreur lors du téléchargement:', error);
+    return false;
+  }
+},
 
   
   getFolders: async (parentId = null) => {

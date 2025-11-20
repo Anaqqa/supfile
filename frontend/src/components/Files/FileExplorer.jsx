@@ -9,7 +9,8 @@ import Loading from '../Shared/Loading';
 import ErrorMessage from '../Shared/ErrorMessage';
 import CreateFolderModal from './CreateFolderModal';
 import RenameModal from './RenameModal';
-import MoveModal from './MoveModal'; 
+import MoveModal from './MoveModal';
+import ShareModal from './ShareModal';  
 
 const FileExplorer = () => {
   const navigate = useNavigate();
@@ -29,9 +30,16 @@ const FileExplorer = () => {
   const [filteredItems, setFilteredItems] = useState({ files: [], folders: [] });
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [showMoveModal, setShowMoveModal] = useState(false);        
-  const [itemToMove, setItemToMove] = useState(null);  
+  const [itemToMove, setItemToMove] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [fileToShare, setFileToShare] = useState(null);
 
-  
+  const openShareModal = (file) => {
+    setFileToShare(file);
+    setShowShareModal(true);
+  };
+
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const folderId = params.get('folder') ? parseInt(params.get('folder')) : null;
@@ -272,6 +280,9 @@ const FileExplorer = () => {
                         <Dropdown.Item onClick={() => downloadFile(file.id)}>
                           <i className="bi bi-download me-2"></i> Télécharger
                         </Dropdown.Item>
+                        <Dropdown.Item onClick={() => openShareModal(file)}>
+                          <i className="bi bi-share me-2"></i> Partager 
+                        </Dropdown.Item>
                         <Dropdown.Item onClick={() => openRenameModal(file, false)}>
                           <i className="bi bi-pencil me-2"></i> Renommer
                         </Dropdown.Item>
@@ -321,6 +332,11 @@ const FileExplorer = () => {
         onHide={() => setShowPreview(false)} 
         file={selectedFile} 
         onDownload={downloadFile}
+      />
+      <ShareModal
+        show={showShareModal}
+        onHide={() => setShowShareModal(false)}
+        file={fileToShare}
       />
     </Container>
   );
