@@ -97,7 +97,9 @@ class FileService:
             mime_type=db_file.mime_type,
             message="Fichier téléversé avec succès"
         )
-    
+                   
+            
+            
     @staticmethod
     async def get_user_files(db: Session, user_id: int, folder_id: int = None, show_deleted: bool = False):
         """

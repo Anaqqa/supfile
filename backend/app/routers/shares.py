@@ -87,6 +87,7 @@ async def access_shared_file(
 ):
     """
     Accéder à un fichier partagé via un lien public
+    Retourne les informations du fichier en JSON
     
     - **token**: Token unique du lien de partage
     """
@@ -135,10 +136,75 @@ async def access_shared_file(
         )
     
     
-    if request and request.query_params.get("view") == "1":
+    if request and request.query_params.get("download") == "1":
         return FileResponse(
             path=filepath,
+            filename=file.original_name,
             media_type=file.mime_type
+        )
+    
+    
+    return {
+        "id": file.id,
+        "name": file.name,
+        "original_name": file.original_name,
+        "size": file.size,
+        "mime_type": file.mime_type,
+        "created_at": file.created_at.isoformat() if file.created_at else None
+    }
+
+@router.get("/public/{token}/download")
+async def download_shared_file(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Télécharger un fichier partagé
+    
+    - **token**: Token unique du lien de partage
+    """
+    
+    share = db.execute(
+        select(Share).where(
+            Share.token == token,
+            Share.is_active == True
+        )
+    ).scalar_one_or_none()
+    
+    if not share:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lien de partage invalide ou expiré"
+        )
+    
+    
+    if share.expires_at and share.expires_at < datetime.datetime.now(datetime.timezone.utc):
+        share.is_active = False
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="Ce lien de partage a expiré"
+        )
+    
+    
+    file = db.execute(
+        select(File).where(
+            File.id == share.file_id,
+            File.is_deleted == False
+        )
+    ).scalar_one_or_none()
+    
+    if not file:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier non trouvé ou supprimé"
+        )
+    
+    filepath = Path(file.storage_path)
+    if not filepath.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fichier non trouvé sur le serveur"
         )
     
     

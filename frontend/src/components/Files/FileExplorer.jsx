@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Row, Col, Button, Card, Table, Breadcrumb, Dropdown, Form, InputGroup } from 'react-bootstrap';
+import { Container, Row, Col, Button, Card, Table, Breadcrumb, Dropdown, Form, InputGroup, Badge, Alert } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFileContext } from '../../contexts/FileContext';
 import { formatFileSize, formatDate } from '../../utils/formatters';
@@ -10,7 +10,9 @@ import ErrorMessage from '../Shared/ErrorMessage';
 import CreateFolderModal from './CreateFolderModal';
 import RenameModal from './RenameModal';
 import MoveModal from './MoveModal';
-import ShareModal from './ShareModal';  
+import ShareModal from './ShareModal';
+import DeleteConfirmModal from './DeleteConfirmModal';
+import CustomToast from '../Shared/CustomToast';
 
 const FileExplorer = () => {
   const navigate = useNavigate();
@@ -29,16 +31,53 @@ const FileExplorer = () => {
   const [itemToRename, setItemToRename] = useState(null);
   const [filteredItems, setFilteredItems] = useState({ files: [], folders: [] });
   const [breadcrumbs, setBreadcrumbs] = useState([]);
-  const [showMoveModal, setShowMoveModal] = useState(false);        
+  const [showMoveModal, setShowMoveModal] = useState(false);
   const [itemToMove, setItemToMove] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [fileToShare, setFileToShare] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [dragOverFolder, setDragOverFolder] = useState(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
 
   const openShareModal = (file) => {
     setFileToShare(file);
     setShowShareModal(true);
   };
 
+  const openDeleteModal = (item, isFolder) => {
+    setItemToDelete({ ...item, isFolder });
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      const success = await deleteItem(itemToDelete.id, itemToDelete.isFolder);
+      
+      if (success) {
+        showToastNotification(
+          `${itemToDelete.isFolder ? 'Dossier' : 'Fichier'} "${itemToDelete.name}" supprimé`,
+          'success'
+        );
+        await fetchContents(currentFolder?.id || null);
+      }
+    } catch (err) {
+      console.error('Erreur lors de la suppression:', err);
+      showToastNotification('Erreur lors de la suppression', 'error');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    }
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -46,7 +85,6 @@ const FileExplorer = () => {
     fetchContents(folderId);
   }, [location.search, fetchContents]);
 
-  
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredItems({ files, folders });
@@ -58,11 +96,8 @@ const FileExplorer = () => {
     }
   }, [files, folders, searchQuery]);
 
-  
   useEffect(() => {
     if (currentFolder) {
-      
-      
       const breadcrumbsList = [
         { id: null, name: 'Racine', path: '/dashboard' },
         { id: currentFolder.id, name: currentFolder.name, path: `/dashboard?folder=${currentFolder.id}` }
@@ -72,6 +107,161 @@ const FileExplorer = () => {
       setBreadcrumbs([{ id: null, name: 'Racine', path: '/dashboard' }]);
     }
   }, [currentFolder]);
+  
+  const handleDragStart = (e, item, isFolder) => {
+    e.stopPropagation();
+    
+    const dragData = {
+      id: item.id,
+      name: item.name,
+      isFolder: isFolder,
+      folder_id: item.folder_id || item.parent_id
+    };
+    
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+    e.dataTransfer.effectAllowed = 'move';
+    
+    setDraggedItem(dragData);
+    
+    setTimeout(() => {
+      e.target.style.opacity = '0.4';
+    }, 0);
+  };
+
+  const handleDragEnd = (e) => {
+    e.stopPropagation();
+    e.target.style.opacity = '1';
+    setDraggedItem(null);
+    setDragOverFolder(null);
+  };
+
+  const handleDragOver = (e, folder) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!draggedItem) return;
+    
+    if (draggedItem.isFolder && draggedItem.id === folder.id) {
+      e.dataTransfer.dropEffect = 'none';
+      return;
+    }
+    
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverFolder(folder.id);
+  };
+
+  const handleDragLeave = (e, folder) => {
+    e.stopPropagation();
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+      if (dragOverFolder === folder.id) {
+        setDragOverFolder(null);
+      }
+    }
+  };
+
+  const handleDrop = async (e, targetFolder) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setDragOverFolder(null);
+    
+    let dragData;
+    try {
+      dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+    } catch (err) {
+      console.error('Erreur de parsing:', err);
+      return;
+    }
+    
+    if (!dragData) return;
+    
+    if (dragData.isFolder && dragData.id === targetFolder.id) {
+      showToastNotification('Impossible de déplacer un dossier sur lui-même', 'warning');
+      return;
+    }
+    
+    const currentFolderId = dragData.folder_id || null;
+    if (currentFolderId === targetFolder.id) {
+      showToastNotification(`L'élément est déjà dans "${targetFolder.name}"`, 'info');
+      return;
+    }
+    
+    try {
+      const success = await moveItem(
+        dragData.id, 
+        targetFolder.id, 
+        dragData.isFolder
+      );
+      
+      if (success) {
+        showToastNotification(
+          `"${dragData.name}" déplacé vers "${targetFolder.name}"`,
+          'success'
+        );
+        await fetchContents(currentFolder?.id || null);
+      }
+    } catch (err) {
+      console.error('Erreur lors du déplacement:', err);
+      showToastNotification('Erreur lors du déplacement', 'error');
+    }
+    
+    setDraggedItem(null);
+  };
+
+  const handleDropOnRoot = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    let dragData;
+    try {
+      dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+    } catch (err) {
+      return;
+    }
+    
+    if (!dragData) return;
+    
+    const currentFolderId = dragData.folder_id || null;
+    const targetFolderId = currentFolder?.id || null;
+    
+    if (currentFolderId === targetFolderId) {
+      showToastNotification('L\'élément est déjà à cet emplacement', 'info');
+      return;
+    }
+    
+    try {
+      const success = await moveItem(
+        dragData.id, 
+        targetFolderId || 0,
+        dragData.isFolder
+      );
+      
+      if (success) {
+        const destination = currentFolder ? `"${currentFolder.name}"` : 'la racine';
+        showToastNotification(
+          `"${dragData.name}" déplacé vers ${destination}`,
+          'success'
+        );
+        await fetchContents(currentFolder?.id || null);
+      }
+    } catch (err) {
+      console.error('Erreur lors du déplacement:', err);
+      showToastNotification('Erreur lors du déplacement', 'error');
+    }
+    
+    setDraggedItem(null);
+  };
+
+  const showToastNotification = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
 
   const handleFolderClick = (folderId) => {
     navigate(`/dashboard?folder=${folderId}`);
@@ -87,13 +277,6 @@ const FileExplorer = () => {
     setShowCreateModal(false);
   };
 
-  const handleDelete = async (item, isFolder) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${isFolder ? 'ce dossier' : 'ce fichier'} ?`)) {
-      await deleteItem(item.id, isFolder);
-      await fetchContents(currentFolder?.id || null);
-    }
-  };
-
   const handleRename = async (newName) => {
     if (itemToRename) {
       await renameItem(itemToRename.id, newName, itemToRename.isFolder);
@@ -103,14 +286,13 @@ const FileExplorer = () => {
   };
 
   const handleMove = async (newFolderId) => {
-  
-  if (itemToMove) {
-    await moveItem(itemToMove.id, newFolderId, itemToMove.isFolder);
-    setShowMoveModal(false);
-    setItemToMove(null);
-    await fetchContents(currentFolder?.id || null);
-  }
-};
+    if (itemToMove) {
+      await moveItem(itemToMove.id, newFolderId, itemToMove.isFolder);
+      setShowMoveModal(false);
+      setItemToMove(null);
+      await fetchContents(currentFolder?.id || null);
+    }
+  };
 
   const openRenameModal = (item, isFolder) => {
     setItemToRename({ ...item, isFolder });
@@ -164,6 +346,19 @@ const FileExplorer = () => {
         </Col>
       </Row>
 
+      {/* Info Drag & Drop */}
+      {draggedItem && (
+        <Row className="mb-3">
+          <Col>
+            <Alert variant="info" className="mb-0 d-flex align-items-center">
+              <i className="bi bi-arrow-left-right me-2"></i>
+              <strong>Déplacement :</strong>
+              <span className="ms-2">Glissez "{draggedItem.name}" sur un dossier ou dans la zone vide</span>
+            </Alert>
+          </Col>
+        </Row>
+      )}
+
       {/* Actions */}
       <Row className="mb-3">
         <Col>
@@ -184,125 +379,172 @@ const FileExplorer = () => {
       {/* Liste des fichiers et dossiers */}
       <Card>
         <Card.Body>
-          <Table hover responsive>
-            <thead>
-              <tr>
-                <th style={{ width: '40%' }}>Nom</th>
-                <th style={{ width: '15%' }}>Type</th>
-                <th style={{ width: '15%' }}>Taille</th>
-                <th style={{ width: '15%' }}>Date</th>
-                <th style={{ width: '15%' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.folders.length === 0 && filteredItems.files.length === 0 && (
+          <div 
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+            }}
+            onDrop={handleDropOnRoot}
+            style={{ minHeight: '300px' }}
+          >
+            <Table hover responsive className="mb-0">
+              <thead>
                 <tr>
-                  <td colSpan="5" className="text-center py-4">
-                    <i className="bi bi-folder2-open text-muted fs-1 d-block mb-2"></i>
-                    <p className="text-muted">Ce dossier est vide</p>
-                  </td>
+                  <th style={{ width: '5%' }}></th>
+                  <th style={{ width: '35%' }}>Nom</th>
+                  <th style={{ width: '15%' }}>Type</th>
+                  <th style={{ width: '15%' }}>Taille</th>
+                  <th style={{ width: '15%' }}>Date</th>
+                  <th style={{ width: '15%' }}>Actions</th>
                 </tr>
-              )}
+              </thead>
+              <tbody>
+                {filteredItems.folders.length === 0 && filteredItems.files.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="text-center py-5">
+                      <i className="bi bi-folder2-open text-muted fs-1 d-block mb-2"></i>
+                      <p className="text-muted mb-0">Ce dossier est vide</p>
+                      <small className="text-muted">Glissez des fichiers ici ou utilisez le bouton "Importer"</small>
+                    </td>
+                  </tr>
+                )}
 
-              {/* Dossiers */}
-              {filteredItems.folders.map((folder) => (
-                <tr key={`folder-${folder.id}`}>
-                  <td>
-                    <div className="d-flex align-items-center">
-                      <i className="bi bi-folder-fill text-warning me-2 fs-5"></i>
-                      <span 
-                        className="folder-name cursor-pointer"
-                        onClick={() => handleFolderClick(folder.id)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        {folder.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td>Dossier</td>
-                  <td>-</td>
-                  <td>{formatDate(folder.created_at)}</td>
-                  <td>
-                    <Dropdown>
-                      <Dropdown.Toggle variant="light" size="sm" id={`dropdown-${folder.id}`}>
-                        <i className="bi bi-three-dots"></i>
-                      </Dropdown.Toggle>
-                      <Dropdown.Menu>
-                        <Dropdown.Item onClick={() => openRenameModal(folder, true)}>
-                          <i className="bi bi-pencil me-2"></i> Renommer
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={() => openMoveModal(folder, true)}> 
-                          <i className="bi bi-folder-symlink me-2"></i> Déplacer
-                        </Dropdown.Item>  
-                        <Dropdown.Item onClick={() => downloadFolder(folder.id)}>
-                          <i className="bi bi-download me-2"></i> Télécharger (ZIP)
-                        </Dropdown.Item>
-                        <Dropdown.Divider />
-                        <Dropdown.Item 
-                          className="text-danger"
-                          onClick={() => handleDelete(folder, true)}
+                {/* Dossiers */}
+                {filteredItems.folders.map((folder) => (
+                  <tr 
+                    key={`folder-${folder.id}`}
+                    draggable="true"
+                    onDragStart={(e) => handleDragStart(e, folder, true)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, folder)}
+                    onDragLeave={(e) => handleDragLeave(e, folder)}
+                    onDrop={(e) => handleDrop(e, folder)}
+                    className={dragOverFolder === folder.id ? 'bg-primary bg-opacity-10' : ''}
+                    style={{ 
+                      cursor: 'grab',
+                      transition: 'all 0.2s ease',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <td className="text-center">
+                      <i className="bi bi-grip-vertical text-muted" style={{ cursor: 'grab' }}></i>
+                    </td>
+                    <td>
+                      <div className="d-flex align-items-center">
+                        <i className="bi bi-folder-fill text-warning me-2 fs-5"></i>
+                        <span 
+                          onClick={() => handleFolderClick(folder.id)}
+                          style={{ cursor: 'pointer' }}
+                          className="text-decoration-none"
                         >
-                          <i className="bi bi-trash me-2"></i> Supprimer
-                        </Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Dropdown>
-                  </td>
-                </tr>
-              ))}
+                          {folder.name}
+                        </span>
+                        {dragOverFolder === folder.id && (
+                          <Badge bg="primary" className="ms-2">
+                            <i className="bi bi-box-arrow-in-down me-1"></i>
+                            Déposer ici
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
+                    <td>Dossier</td>
+                    <td>-</td>
+                    <td>{formatDate(folder.created_at)}</td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <Dropdown>
+                        <Dropdown.Toggle variant="light" size="sm">
+                          <i className="bi bi-three-dots"></i>
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                          <Dropdown.Item onClick={() => openRenameModal(folder, true)}>
+                            <i className="bi bi-pencil me-2"></i> Renommer
+                          </Dropdown.Item>
+                          <Dropdown.Item onClick={() => openMoveModal(folder, true)}>
+                            <i className="bi bi-folder-symlink me-2"></i> Déplacer
+                          </Dropdown.Item>
+                          <Dropdown.Item onClick={() => downloadFolder(folder.id)}>
+                            <i className="bi bi-download me-2"></i> Télécharger (ZIP)
+                          </Dropdown.Item>
+                          <Dropdown.Divider />
+                          <Dropdown.Item 
+                            className="text-danger"
+                            onClick={() => openDeleteModal(folder, true)}
+                          >
+                            <i className="bi bi-trash me-2"></i> Supprimer
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </td>
+                  </tr>
+                ))}
 
-              {/* Fichiers */}
-              {filteredItems.files.map((file) => (
-                <tr key={`file-${file.id}`}>
-                  <td>
-                    <div className="d-flex align-items-center">
-                      <i className={`bi bi-file-earmark me-2 fs-5 ${getFileIcon(file.mime_type)}`}></i>
-                      <span 
-                        className="file-name cursor-pointer"
-                        onClick={() => handleFileClick(file)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        {file.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td>{getFileType(file.mime_type)}</td>
-                  <td>{formatFileSize(file.size)}</td>
-                  <td>{formatDate(file.created_at)}</td>
-                  <td>
-                    <Dropdown>
-                      <Dropdown.Toggle variant="light" size="sm" id={`dropdown-${file.id}`}>
-                        <i className="bi bi-three-dots"></i>
-                      </Dropdown.Toggle>
-                      <Dropdown.Menu>
-                        <Dropdown.Item onClick={() => handleFileClick(file)}>
-                          <i className="bi bi-eye me-2"></i> Prévisualiser
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={() => downloadFile(file.id)}>
-                          <i className="bi bi-download me-2"></i> Télécharger
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={() => openShareModal(file)}>
-                          <i className="bi bi-share me-2"></i> Partager 
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={() => openRenameModal(file, false)}>
-                          <i className="bi bi-pencil me-2"></i> Renommer
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={() => openMoveModal(file, false)}> 
-                          <i className="bi bi-folder-symlink me-2"></i> Déplacer
-                        </Dropdown.Item>
-                        <Dropdown.Divider />
-                        <Dropdown.Item 
-                          className="text-danger"
-                          onClick={() => handleDelete(file, false)}
+                {/* Fichiers */}
+                {filteredItems.files.map((file) => (
+                  <tr 
+                    key={`file-${file.id}`}
+                    draggable="true"
+                    onDragStart={(e) => handleDragStart(e, file, false)}
+                    onDragEnd={handleDragEnd}
+                    style={{ 
+                      cursor: 'grab',
+                      transition: 'opacity 0.2s ease',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <td className="text-center">
+                      <i className="bi bi-grip-vertical text-muted" style={{ cursor: 'grab' }}></i>
+                    </td>
+                    <td>
+                      <div className="d-flex align-items-center">
+                        <i className={`bi bi-file-earmark me-2 fs-5 ${getFileIcon(file.mime_type)}`}></i>
+                        <span 
+                          onClick={() => handleFileClick(file)}
+                          style={{ cursor: 'pointer' }}
+                          className="text-decoration-none"
                         >
-                          <i className="bi bi-trash me-2"></i> Supprimer
-                        </Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Dropdown>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+                          {file.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td>{getFileType(file.mime_type)}</td>
+                    <td>{formatFileSize(file.size)}</td>
+                    <td>{formatDate(file.created_at)}</td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <Dropdown>
+                        <Dropdown.Toggle variant="light" size="sm">
+                          <i className="bi bi-three-dots"></i>
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                          <Dropdown.Item onClick={() => handleFileClick(file)}>
+                            <i className="bi bi-eye me-2"></i> Prévisualiser
+                          </Dropdown.Item>
+                          <Dropdown.Item onClick={() => downloadFile(file.id)}>
+                            <i className="bi bi-download me-2"></i> Télécharger
+                          </Dropdown.Item>
+                          <Dropdown.Item onClick={() => openShareModal(file)}>
+                            <i className="bi bi-share me-2"></i> Partager
+                          </Dropdown.Item>
+                          <Dropdown.Item onClick={() => openRenameModal(file, false)}>
+                            <i className="bi bi-pencil me-2"></i> Renommer
+                          </Dropdown.Item>
+                          <Dropdown.Item onClick={() => openMoveModal(file, false)}>
+                            <i className="bi bi-folder-symlink me-2"></i> Déplacer
+                          </Dropdown.Item>
+                          <Dropdown.Divider />
+                          <Dropdown.Item 
+                            className="text-danger"
+                            onClick={() => openDeleteModal(file, false)}
+                          >
+                            <i className="bi bi-trash me-2"></i> Supprimer
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
         </Card.Body>
       </Card>
 
@@ -320,6 +562,7 @@ const FileExplorer = () => {
         initialName={itemToRename?.name || ''} 
         itemType={itemToRename?.isFolder ? 'dossier' : 'fichier'} 
       />
+
       <MoveModal
         show={showMoveModal}
         onHide={() => setShowMoveModal(false)}
@@ -327,21 +570,40 @@ const FileExplorer = () => {
         item={itemToMove}
         itemType={itemToMove?.isFolder ? 'dossier' : 'fichier'}
       />
+
       <FilePreview 
         show={showPreview} 
         onHide={() => setShowPreview(false)} 
         file={selectedFile} 
         onDownload={downloadFile}
       />
+
       <ShareModal
         show={showShareModal}
         onHide={() => setShowShareModal(false)}
         file={fileToShare}
       />
+
+      <DeleteConfirmModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+        item={itemToDelete}
+        itemType={itemToDelete?.isFolder ? 'dossier' : 'fichier'}
+        loading={isDeleting}
+      />
+
+      {/* Toast de notification */}
+      <CustomToast
+        show={showToast}
+        onClose={() => setShowToast(false)}
+        message={toastMessage}
+        type={toastType}
+        icon={toastType === 'success' ? 'check-circle-fill' : toastType === 'error' ? 'x-circle-fill' : 'info-circle-fill'}
+      />
     </Container>
   );
 };
-
 
 const getFileIcon = (mimeType) => {
   if (!mimeType) return 'text-secondary';
