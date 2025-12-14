@@ -1,154 +1,136 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Container, Row, Col, Card } from 'react-bootstrap';
+import { Button, Container, Row, Col } from 'react-bootstrap';
 
 const Home = () => {
   return (
-    <div className="min-vh-100">
+    <div>
       {/* Hero Section */}
-      <section className="bg-primary text-white py-5">
+      <section className="home-hero">
         <Container>
-          <Row className="align-items-center py-5">
-            <Col lg={6} className="text-center text-lg-start mb-4 mb-lg-0">
-              <h1 className="display-3 fw-bold mb-4">
-                <i className="bi bi-cloud-arrow-up me-3"></i>
-                SUPFile
+          <Row className="align-items-center">
+            <Col lg={8} className="text-lg-start text-center">
+              <div className="home-brand">
+                <i className="bi bi-cloud-arrow-up"></i>
+                <span>SUPFile</span>
+              </div>
+              
+              <h1 className="home-title">
+                Stockez vos fichiers en toute sécurité
               </h1>
-              <h2 className="h3 mb-4">Votre espace de stockage cloud sécurisé</h2>
-              <p className="lead mb-4">
-                Stockez, gérez et partagez vos fichiers en toute sécurité. 
-                30 Go d'espace gratuit pour démarrer.
+              
+              <p className="home-subtitle">
+                Une plateforme de stockage cloud moderne, sécurisée et intuitive. 
+                Accédez à vos fichiers partout, à tout moment.
               </p>
-              <div className="d-flex gap-3 justify-content-center justify-content-lg-start">
-                <Link to="/register">
-                  <Button variant="light" size="lg" className="px-4">
-                    <i className="bi bi-person-plus me-2"></i>
-                    Commencer gratuitement
-                  </Button>
+              
+              <div className="home-cta-buttons">
+                <Link to="/register" className="home-btn-primary">
+                  Commencer gratuitement
+                  <i className="bi bi-arrow-right ms-2"></i>
                 </Link>
-                <Link to="/login">
-                  <Button variant="outline-light" size="lg" className="px-4">
-                    Se connecter
-                  </Button>
+                <Link to="/login" className="home-btn-secondary">
+                  Se connecter
                 </Link>
               </div>
-            </Col>
-            <Col lg={6} className="text-center">
-              <i className="bi bi-cloud-check display-1" style={{ fontSize: '12rem', opacity: 0.9 }}></i>
+              
+              <div className="home-features">
+                <div className="home-feature-badge">
+                  <i className="bi bi-check-circle-fill"></i>
+                  <span>30 Go gratuits</span>
+                </div>
+                <div className="home-feature-badge">
+                  <i className="bi bi-check-circle-fill"></i>
+                  <span>Chiffrement sécurisé</span>
+                </div>
+                <div className="home-feature-badge">
+                  <i className="bi bi-check-circle-fill"></i>
+                  <span>Partage facile</span>
+                </div>
+              </div>
             </Col>
           </Row>
         </Container>
       </section>
 
       {/* Features Section */}
-      <section className="py-5 bg-light">
+      <section className="home-features-section">
         <Container>
-          <h2 className="text-center mb-5">Fonctionnalités principales</h2>
+          <h2 className="home-section-title">Pourquoi choisir SUPFile ?</h2>
+          <p className="home-section-subtitle">
+            Une solution complète pour tous vos besoins de stockage
+          </p>
+          
           <Row className="g-4">
             <Col md={4}>
-              <Card className="h-100 border-0 shadow-sm text-center p-4">
-                <Card.Body>
-                  <i className="bi bi-shield-check text-primary display-4 mb-3"></i>
-                  <Card.Title>Sécurisé</Card.Title>
-                  <Card.Text className="text-muted">
-                    Vos données sont chiffrées et protégées. Authentification OAuth2 disponible.
-                  </Card.Text>
-                </Card.Body>
-              </Card>
+              <div className="home-feature-card">
+                <div className="home-feature-icon">
+                  <i className="bi bi-shield-check"></i>
+                </div>
+                <h3 className="home-feature-title">Sécurité maximale</h3>
+                <p className="home-feature-description">
+                  Vos fichiers sont chiffrés et protégés avec les dernières technologies de sécurité.
+                </p>
+              </div>
             </Col>
+            
             <Col md={4}>
-              <Card className="h-100 border-0 shadow-sm text-center p-4">
-                <Card.Body>
-                  <i className="bi bi-folder-fill text-primary display-4 mb-3"></i>
-                  <Card.Title>Organisation</Card.Title>
-                  <Card.Text className="text-muted">
-                    Créez des dossiers, déplacez vos fichiers et retrouvez-les facilement.
-                  </Card.Text>
-                </Card.Body>
-              </Card>
+              <div className="home-feature-card">
+                <div className="home-feature-icon">
+                  <i className="bi bi-lightning-charge"></i>
+                </div>
+                <h3 className="home-feature-title">Rapide et fiable</h3>
+                <p className="home-feature-description">
+                  Upload et téléchargement ultra-rapides avec une infrastructure hautement disponible.
+                </p>
+              </div>
             </Col>
+            
             <Col md={4}>
-              <Card className="h-100 border-0 shadow-sm text-center p-4">
-                <Card.Body>
-                  <i className="bi bi-share text-primary display-4 mb-3"></i>
-                  <Card.Title>Partage</Card.Title>
-                  <Card.Text className="text-muted">
-                    Partagez vos fichiers avec des liens sécurisés en un clic.
-                  </Card.Text>
-                </Card.Body>
-              </Card>
+              <div className="home-feature-card">
+                <div className="home-feature-icon">
+                  <i className="bi bi-share"></i>
+                </div>
+                <h3 className="home-feature-title">Partage simple</h3>
+                <p className="home-feature-description">
+                  Partagez vos fichiers en un clic avec des liens sécurisés et personnalisables.
+                </p>
+              </div>
             </Col>
+            
             <Col md={4}>
-              <Card className="h-100 border-0 shadow-sm text-center p-4">
-                <Card.Body>
-                  <i className="bi bi-eye text-primary display-4 mb-3"></i>
-                  <Card.Title>Prévisualisation</Card.Title>
-                  <Card.Text className="text-muted">
-                    Visualisez vos images, vidéos, PDF et documents directement en ligne.
-                  </Card.Text>
-                </Card.Body>
-              </Card>
+              <div className="home-feature-card">
+                <div className="home-feature-icon">
+                  <i className="bi bi-folder-check"></i>
+                </div>
+                <h3 className="home-feature-title">Organisation facile</h3>
+                <p className="home-feature-description">
+                  Gérez vos fichiers et dossiers avec une interface intuitive et moderne.
+                </p>
+              </div>
             </Col>
+            
             <Col md={4}>
-              <Card className="h-100 border-0 shadow-sm text-center p-4">
-                <Card.Body>
-                  <i className="bi bi-search text-primary display-4 mb-3"></i>
-                  <Card.Title>Recherche</Card.Title>
-                  <Card.Text className="text-muted">
-                    Trouvez instantanément vos fichiers grâce à la recherche intelligente.
-                  </Card.Text>
-                </Card.Body>
-              </Card>
+              <div className="home-feature-card">
+                <div className="home-feature-icon">
+                  <i className="bi bi-eye"></i>
+                </div>
+                <h3 className="home-feature-title">Prévisualisation</h3>
+                <p className="home-feature-description">
+                  Visualisez vos images, vidéos et documents directement dans le navigateur.
+                </p>
+              </div>
             </Col>
+            
             <Col md={4}>
-              <Card className="h-100 border-0 shadow-sm text-center p-4">
-                <Card.Body>
-                  <i className="bi bi-trash text-primary display-4 mb-3"></i>
-                  <Card.Title>Corbeille</Card.Title>
-                  <Card.Text className="text-muted">
-                    Restaurez vos fichiers supprimés depuis la corbeille.
-                  </Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        </Container>
-      </section>
-
-      {/* Storage Section */}
-      <section className="py-5">
-        <Container>
-          <Row className="align-items-center">
-            <Col lg={6} className="mb-4 mb-lg-0">
-              <h2 className="mb-4">30 Go d'espace gratuit</h2>
-              <p className="lead text-muted mb-4">
-                Commencez dès maintenant avec 30 Go d'espace de stockage gratuit. 
-                Uploadez vos photos, vidéos, documents et bien plus encore.
-              </p>
-              <ul className="list-unstyled">
-                <li className="mb-2">
-                  <i className="bi bi-check-circle-fill text-success me-2"></i>
-                  Upload de fichiers jusqu'à 5 Go
-                </li>
-                <li className="mb-2">
-                  <i className="bi bi-check-circle-fill text-success me-2"></i>
-                  Dossiers et sous-dossiers illimités
-                </li>
-                <li className="mb-2">
-                  <i className="bi bi-check-circle-fill text-success me-2"></i>
-                  Téléchargement de dossiers en ZIP
-                </li>
-                <li className="mb-2">
-                  <i className="bi bi-check-circle-fill text-success me-2"></i>
-                  Partage sécurisé par lien
-                </li>
-              </ul>
-            </Col>
-            <Col lg={6} className="text-center">
-              <div className="bg-primary bg-opacity-10 rounded p-5">
-                <i className="bi bi-hdd-stack display-1 text-primary mb-3"></i>
-                <h3 className="text-primary">30 GB</h3>
-                <p className="text-muted">Espace de stockage gratuit</p>
+              <div className="home-feature-card">
+                <div className="home-feature-icon">
+                  <i className="bi bi-phone"></i>
+                </div>
+                <h3 className="home-feature-title">Multi-plateforme</h3>
+                <p className="home-feature-description">
+                  Accédez à vos fichiers depuis n'importe quel appareil, où que vous soyez.
+                </p>
               </div>
             </Col>
           </Row>
@@ -156,38 +138,27 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-5 bg-primary text-white">
-        <Container className="text-center">
-          <h2 className="mb-4">Prêt à commencer ?</h2>
-          <p className="lead mb-4">
-            Créez votre compte gratuitement en quelques secondes
+      <section className="home-cta-section">
+        <Container>
+          <h2 className="home-cta-title">Prêt à commencer ?</h2>
+          <p className="home-cta-description">
+            Rejoignez des milliers d'utilisateurs qui font confiance à SUPFile pour stocker leurs fichiers.
           </p>
-          <Link to="/register">
-            <Button variant="light" size="lg" className="px-5">
-              <i className="bi bi-person-plus me-2"></i>
-              S'inscrire maintenant
-            </Button>
+          <Link to="/register" className="home-btn-primary">
+            Créer un compte gratuit
+            <i className="bi bi-arrow-right ms-2"></i>
           </Link>
         </Container>
       </section>
 
       {/* Footer */}
-      <footer className="bg-dark text-white py-4">
+      <footer className="bg-light text-center p-4 border-top">
         <Container>
-          <Row>
-            <Col md={6} className="text-center text-md-start mb-3 mb-md-0">
-              <h5>
-                <i className="bi bi-cloud-arrow-up me-2"></i>
-                SUPFile
-              </h5>
-              <p className="text-muted mb-0">Cloud Storage Platform</p>
-            </Col>
-            <Col md={6} className="text-center text-md-end">
-              <p className="text-muted mb-0">
-                Architecture 3-tiers | Sécurisé | Open Source
-              </p>
-            </Col>
-          </Row>
+          <div className="mb-3">
+            <i className="bi bi-cloud-arrow-up text-gradient" style={{ fontSize: '2rem' }}></i>
+            <h5 className="mt-2">SUPFile</h5>
+          </div>
+          <p className="text-muted mb-0">Cloud Storage Platform - Stockage sécurisé et fiable</p>
         </Container>
       </footer>
     </div>

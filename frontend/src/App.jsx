@@ -11,7 +11,6 @@ import Settings from './pages/Settings';
 import SharedFile from './pages/SharedFile';
 import AuthCallback from './components/Auth/AuthCallback';
 import MainLayout from './components/Layout/MainLayout';
-import './App.css';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();

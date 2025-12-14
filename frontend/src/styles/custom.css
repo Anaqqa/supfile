@@ -1,0 +1,944 @@
+/* ============================================================================
+   SUPFILE - CUSTOM STYLES
+   Style: OneDrive Modernisé
+   ============================================================================ */
+
+/* ============================================================================
+   VARIABLES & RESET
+   ============================================================================ */
+
+:root {
+  /* Couleurs principales */
+  --primary-gradient-start: #667eea;
+  --primary-gradient-end: #764ba2;
+  --primary-color: #667eea;
+  
+  /* Couleurs neutres */
+  --text-primary: #323130;
+  --text-secondary: #605e5c;
+  --text-tertiary: #a19f9d;
+  
+  /* Backgrounds */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-hover: #f3f2f1;
+  
+  /* Bordures */
+  --border-color: #edebe9;
+  --border-hover: #667eea;
+  
+  /* Icônes de fichiers - Style OneDrive */
+  --icon-folder: #FFB900;
+  --icon-pdf: #D83B01;
+  --icon-word: #2B579A;
+  --icon-excel: #217346;
+  --icon-powerpoint: #C43E1C;
+  --icon-text: #6264A7;
+  --icon-image: #00A4EF;
+  --icon-video: #8661C5;
+  --icon-default: #605e5c;
+  
+  /* Ombres */
+  --shadow-sm: 0 1.6px 3.6px rgba(0,0,0,.13), 0 0.3px 0.9px rgba(0,0,0,.11);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+  --shadow-lg: 0 8px 32px rgba(102, 126, 234, 0.3);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+   NAVBAR - Style OneDrive
+   ============================================================================ */
+
+.modern-navbar {
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+  border-bottom: none;
+  box-shadow: var(--shadow-lg);
+  padding: 0.75rem 1.5rem;
+}
+
+.modern-navbar .navbar-brand {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modern-navbar .navbar-brand i {
+  font-size: 1.75rem;
+}
+
+.modern-navbar .nav-link {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all var(--transition-normal);
+}
+
+.modern-navbar .nav-link:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.modern-navbar .nav-link.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* ============================================================================
+   COMMAND BAR - Style OneDrive
+   ============================================================================ */
+
+.command-bar {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.cmd-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: 0.9375rem;
+}
+
+.cmd-btn:hover:not(.cmd-btn-primary) {
+  background: var(--bg-hover);
+}
+
+.cmd-btn-primary {
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.cmd-btn-primary:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.cmd-btn i {
+  font-size: 1.125rem;
+}
+
+/* ============================================================================
+   NAVBAR - Avec recherche intégrée
+   ============================================================================ */
+
+.navbar-search-wrapper {
+  flex: 1;
+  max-width: 600px;
+  margin: 0 2rem;
+}
+
+.navbar-search {
+  position: relative;
+  width: 100%;
+}
+
+.navbar-search input {
+  width: 100%;
+  padding: 0.625rem 2.5rem 0.625rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  transition: all var(--transition-normal);
+}
+
+.navbar-search input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.navbar-search input:focus {
+  outline: none;
+  background: white;
+  color: var(--text-primary);
+  border-color: white;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.navbar-search input:focus::placeholder {
+  color: var(--text-tertiary);
+}
+
+.navbar-search .search-icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+  transition: color var(--transition-normal);
+}
+
+.navbar-search input:focus + .search-icon {
+  color: var(--text-secondary);
+}
+
+/* ============================================================================
+   EXPLORER HEADER - Breadcrumb + Stats + Toggle
+   ============================================================================ */
+
+.explorer-header-bar {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;  /* Plus d'espace vertical */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);  /* Légère ombre pour le relief */
+}
+
+.header-left {
+  flex: 1;
+  min-width: 200px;
+}
+
+.header-center {
+  flex-shrink: 0;
+}
+
+.header-right {
+  flex-shrink: 0;
+}
+
+/* Breadcrumb compact */
+.compact-breadcrumb {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.compact-breadcrumb .breadcrumb-item {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.compact-breadcrumb .breadcrumb-item a {
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color var(--transition-normal);
+}
+
+.compact-breadcrumb .breadcrumb-item a:hover {
+  color: var(--primary-color);
+}
+
+.compact-breadcrumb .breadcrumb-item.active {
+  color: var(--primary-color);
+}
+
+.compact-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+  content: "›";
+  font-size: 1.125rem;
+  color: var(--text-tertiary);
+  padding: 0 0.25rem;
+}
+
+/* Stats compactes au centre - VERSION BADGES */
+.compact-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: all var(--transition-normal);
+}
+
+.stat-badge:hover {
+  background: rgba(102, 126, 234, 0.12);
+  border-color: rgba(102, 126, 234, 0.25);
+}
+
+.stat-badge i {
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
+.stat-badge .stat-number {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+/* Toggle vue compact */
+.view-toggle-compact {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg-secondary);
+  padding: 0.25rem;
+  border-radius: 6px;
+}
+
+.view-btn-compact {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: 1.125rem;
+}
+
+.view-btn-compact:hover {
+  background: white;
+  color: var(--text-primary);
+}
+
+.view-btn-compact.active {
+  background: white;
+  color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ============================================================================
+   SEARCH BAR (si besoin ailleurs)
+   ============================================================================ */
+
+/* ============================================================================
+   FILES TABLE - Style OneDrive
+   ============================================================================ */
+
+.files-card {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin: 0 1.5rem 2rem 1.5rem;
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.modern-table thead {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modern-table thead th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: color var(--transition-normal);
+}
+
+.modern-table thead th:hover {
+  color: var(--text-primary);
+}
+
+.modern-table tbody tr {
+  border-bottom: 1px solid #f8f9fa;
+  transition: background var(--transition-fast);
+}
+
+.modern-table tbody tr:hover {
+  background: var(--bg-secondary);
+}
+
+.modern-table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+/* ============================================================================
+   FILE/FOLDER ITEMS
+   ============================================================================ */
+
+.file-item,
+.folder-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.item-icon {
+  font-size: 2rem !important;  /* FORCE 2rem pour être bien visible */
+  flex-shrink: 0;
+  transition: transform var(--transition-normal);
+}
+
+.file-item:hover .item-icon,
+.folder-item:hover .item-icon {
+  transform: scale(1.1);
+}
+
+.item-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: color var(--transition-normal);
+  word-break: break-word;
+}
+
+.file-item:hover .item-name,
+.folder-item:hover .item-name {
+  color: var(--primary-color);
+}
+
+/* ============================================================================
+   ICÔNES DE FICHIERS - GRANDES ET COLORÉES (Style OneDrive)
+   ============================================================================ */
+
+/* Dossiers */
+.icon-folder {
+  color: var(--icon-folder) !important;
+  filter: drop-shadow(0 2px 4px rgba(255, 185, 0, 0.25));
+}
+
+/* PDF */
+.icon-pdf {
+  color: var(--icon-pdf) !important;
+}
+
+/* Documents Word */
+.icon-word,
+.icon-doc {
+  color: var(--icon-word) !important;
+}
+
+/* Feuilles Excel */
+.icon-excel,
+.icon-spreadsheet {
+  color: var(--icon-excel) !important;
+}
+
+/* Présentations PowerPoint */
+.icon-powerpoint,
+.icon-presentation {
+  color: var(--icon-powerpoint) !important;
+}
+
+/* Fichiers texte */
+.icon-text {
+  color: var(--icon-text) !important;
+}
+
+/* Images */
+.icon-image {
+  color: var(--icon-image) !important;
+}
+
+/* Vidéos */
+.icon-video {
+  color: var(--icon-video) !important;
+}
+
+/* Audio */
+.icon-audio {
+  color: #FF8C00 !important;
+}
+
+/* Fichiers par défaut */
+.icon-default {
+  color: var(--icon-default) !important;
+}
+
+/* ============================================================================
+   ACTIONS DROPDOWN
+   ============================================================================ */
+
+.actions-dropdown .dropdown-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.375rem 0.625rem;
+  border-radius: 6px;
+  font-size: 1.125rem;
+  opacity: 0;
+  transition: all var(--transition-normal);
+}
+
+.modern-table tbody tr:hover .actions-dropdown .dropdown-toggle {
+  opacity: 1;
+}
+
+.actions-dropdown .dropdown-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.actions-dropdown .dropdown-menu {
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  padding: 0.5rem;
+}
+
+.actions-dropdown .dropdown-item {
+  border-radius: 6px;
+  padding: 0.625rem 1rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.actions-dropdown .dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--primary-color);
+}
+
+.actions-dropdown .dropdown-item i {
+  width: 20px;
+  font-size: 1rem;
+}
+
+.actions-dropdown .dropdown-divider {
+  margin: 0.5rem 0;
+  border-color: var(--border-color);
+}
+
+/* ============================================================================
+   DRAG & DROP
+   ============================================================================ */
+
+.draggable-item {
+  cursor: grab;
+  transition: all var(--transition-normal);
+}
+
+.draggable-item:active {
+  cursor: grabbing;
+}
+
+.dragging {
+  opacity: 0.5;
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.drop-zone {
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.drop-zone.drag-over {
+  background: rgba(102, 126, 234, 0.08);
+  border-left: 3px solid var(--primary-color);
+}
+
+/* ============================================================================
+   MODALS - Style moderne
+   ============================================================================ */
+
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-title {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--border-color);
+  padding: 1rem 1.5rem;
+  background: var(--bg-secondary);
+}
+
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
+
+.btn {
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
+  transition: all var(--transition-normal);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+  border: none;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+
+/* ============================================================================
+   FORMS
+   ============================================================================ */
+
+.form-control {
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  padding: 0.625rem 1rem;
+  transition: all var(--transition-normal);
+}
+
+.form-control:focus {
+  border-color: var(--border-hover);
+  box-shadow: 0 0 0 1px var(--border-hover);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .stats-bar {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .command-bar {
+    padding: 0.75rem 1rem;
+  }
+  
+  .modern-breadcrumb {
+    padding: 0.75rem 1rem;
+  }
+  
+  .files-card {
+    margin: 0 1rem 1rem 1rem;
+  }
+  
+  .modern-table thead th,
+  .modern-table tbody td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .item-icon {
+    font-size: 1.5rem;
+  }
+}
+
+/* ============================================================================
+   DASHBOARD WRAPPER
+   ============================================================================ */
+
+.dashboard-wrapper {
+  background: var(--bg-secondary);
+  min-height: calc(100vh - 120px);
+}
+
+/* ============================================================================
+   HOME PAGE - Landing
+   ============================================================================ */
+
+.home-hero {
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.home-brand {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.home-brand i {
+  font-size: 3.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.home-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+}
+
+.home-subtitle {
+  font-size: 1.25rem;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+}
+
+.home-cta-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.home-btn-primary {
+  background: white;
+  color: var(--primary-color);
+  border: none;
+  padding: 1rem 2rem;
+  font-weight: 700;
+  border-radius: 8px;
+  transition: all var(--transition-normal);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.home-btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  color: var(--primary-gradient-end);
+}
+
+.home-btn-secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  padding: 1rem 2rem;
+  font-weight: 700;
+  border-radius: 8px;
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.home-btn-secondary:hover {
+  background: white;
+  color: var(--primary-color);
+  transform: translateY(-3px);
+}
+
+.home-features {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.home-feature-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.home-feature-badge i {
+  color: #4ade80;
+}
+
+/* Features Section */
+.home-features-section {
+  padding: 6rem 0;
+  background: var(--bg-secondary);
+}
+
+.home-section-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.home-section-subtitle {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.home-feature-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  text-align: center;
+  transition: all var(--transition-slow);
+  height: 100%;
+  box-shadow: var(--shadow-sm);
+}
+
+.home-feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-md);
+}
+
+.home-feature-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  transition: all var(--transition-normal);
+}
+
+.home-feature-card:hover .home-feature-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.home-feature-icon i {
+  font-size: 2.5rem;
+  color: white;
+}
+
+.home-feature-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.home-feature-description {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* CTA Section */
+.home-cta-section {
+  padding: 6rem 0;
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+  color: white;
+  text-align: center;
+}
+
+.home-cta-title {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+}
+
+.home-cta-description {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+}
+
+/* ============================================================================
+   UTILITIES
+   ============================================================================ */
+
+.gradient-bg {
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
