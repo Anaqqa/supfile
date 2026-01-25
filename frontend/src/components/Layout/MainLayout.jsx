@@ -15,13 +15,16 @@ const MainLayout = ({ children }) => {
   };
 
   const handleSearch = (e) => {
-    e.preventDefault();
     setSearchQuery(e.target.value);
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    console.log('Recherche:', searchQuery);
+    if (searchQuery.trim()) {
+      navigate(`/dashboard?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const isDashboard = location.pathname === '/dashboard';

@@ -1,11 +1,8 @@
 /* ============================================================================
    SUPFILE - CUSTOM STYLES
-   Style: OneDrive Modernisé
    ============================================================================ */
 
-/* ============================================================================
-   VARIABLES & RESET
-   ============================================================================ */
+/* VARIABLES & RESET*/
 
 :root {
   /* Couleurs principales */
@@ -27,7 +24,7 @@
   --border-color: #edebe9;
   --border-hover: #667eea;
   
-  /* Icônes de fichiers - Style OneDrive */
+  /* Icônes de fichiers */
   --icon-folder: #FFB900;
   --icon-pdf: #D83B01;
   --icon-word: #2B579A;
@@ -59,9 +56,7 @@ body {
   color: var(--text-primary);
 }
 
-/* ============================================================================
-   NAVBAR - Style OneDrive
-   ============================================================================ */
+/* NAVBAR */
 
 .modern-navbar {
   background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
@@ -102,9 +97,7 @@ body {
   color: white;
 }
 
-/* ============================================================================
-   COMMAND BAR - Style OneDrive
-   ============================================================================ */
+/* COMMAND BAR */
 
 .command-bar {
   background: var(--bg-primary);
@@ -150,9 +143,7 @@ body {
   font-size: 1.125rem;
 }
 
-/* ============================================================================
-   NAVBAR - Avec recherche intégrée
-   ============================================================================ */
+/* NAVBAR - Avec recherche intégrée*/
 
 .navbar-search-wrapper {
   flex: 1;
@@ -206,20 +197,18 @@ body {
   color: var(--text-secondary);
 }
 
-/* ============================================================================
-   EXPLORER HEADER - Breadcrumb + Stats + Toggle
-   ============================================================================ */
+/* EXPLORER HEADER - Breadcrumb + Stats + Toggle */
 
 .explorer-header-bar {
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
-  padding: 1.25rem 1.5rem;  /* Plus d'espace vertical */
+  padding: 1.25rem 1.5rem;  
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
-  box-shadow: var(--shadow-sm);  /* Légère ombre pour le relief */
+  box-shadow: var(--shadow-sm); 
 }
 
 .header-left {
@@ -275,7 +264,7 @@ body {
   padding: 0 0.25rem;
 }
 
-/* Stats compactes au centre - VERSION BADGES */
+/* Stats compactes au centre */
 .compact-stats {
   display: flex;
   align-items: center;
@@ -311,6 +300,71 @@ body {
   font-weight: 700;
 }
 
+/* Badge de stockage avec barre de progression */
+.storage-badge {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: 20px;
+  min-width: 180px;
+  transition: all var(--transition-normal);
+}
+
+.storage-badge:hover {
+  background: rgba(102, 126, 234, 0.12);
+  border-color: rgba(102, 126, 234, 0.25);
+}
+
+.storage-badge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.storage-badge-header i {
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
+.storage-badge-text {
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+}
+
+.storage-badge-text .used {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.storage-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(102, 126, 234, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.storage-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-gradient-start), var(--primary-gradient-end));
+  border-radius: 2px;
+  transition: width var(--transition-slow);
+}
+
+.storage-progress-fill.warning {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+.storage-progress-fill.danger {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
 /* Toggle vue compact */
 .view-toggle-compact {
   display: flex;
@@ -342,13 +396,8 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-/* ============================================================================
-   SEARCH BAR (si besoin ailleurs)
-   ============================================================================ */
 
-/* ============================================================================
-   FILES TABLE - Style OneDrive
-   ============================================================================ */
+/* FILES TABLE */
 
 .files-card {
   background: var(--bg-primary);
@@ -399,9 +448,7 @@ body {
   vertical-align: middle;
 }
 
-/* ============================================================================
-   FILE/FOLDER ITEMS
-   ============================================================================ */
+/* FILE/FOLDER ITEMS*/
 
 .file-item,
 .folder-item {
@@ -412,7 +459,7 @@ body {
 }
 
 .item-icon {
-  font-size: 2rem !important;  /* FORCE 2rem pour être bien visible */
+  font-size: 1,5rem !important; 
   flex-shrink: 0;
   transition: transform var(--transition-normal);
 }
@@ -434,9 +481,7 @@ body {
   color: var(--primary-color);
 }
 
-/* ============================================================================
-   ICÔNES DE FICHIERS - GRANDES ET COLORÉES (Style OneDrive)
-   ============================================================================ */
+/* ICÔNES DE FICHIERS */
 
 /* Dossiers */
 .icon-folder {
@@ -492,9 +537,7 @@ body {
   color: var(--icon-default) !important;
 }
 
-/* ============================================================================
-   ACTIONS DROPDOWN
-   ============================================================================ */
+/* ACTIONS DROPDOWN */
 
 .actions-dropdown .dropdown-toggle {
   background: transparent;
@@ -548,9 +591,7 @@ body {
   border-color: var(--border-color);
 }
 
-/* ============================================================================
-   DRAG & DROP
-   ============================================================================ */
+/* DRAG & DROP */
 
 .draggable-item {
   cursor: grab;
@@ -576,9 +617,7 @@ body {
   border-left: 3px solid var(--primary-color);
 }
 
-/* ============================================================================
-   MODALS - Style moderne
-   ============================================================================ */
+/* MODALS */
 
 .modal-content {
   border-radius: 12px;
@@ -608,9 +647,7 @@ body {
   background: var(--bg-secondary);
 }
 
-/* ============================================================================
-   BUTTONS
-   ============================================================================ */
+/* BUTTONS*/
 
 .btn {
   border-radius: 6px;
@@ -641,9 +678,7 @@ body {
   border-color: var(--border-hover);
 }
 
-/* ============================================================================
-   FORMS
-   ============================================================================ */
+/* FORMS */
 
 .form-control {
   border-radius: 6px;
@@ -663,9 +698,7 @@ body {
   margin-bottom: 0.5rem;
 }
 
-/* ============================================================================
-   RESPONSIVE
-   ============================================================================ */
+/* RESPONSIVE */
 
 @media (max-width: 768px) {
   .stats-bar {
@@ -696,18 +729,14 @@ body {
   }
 }
 
-/* ============================================================================
-   DASHBOARD WRAPPER
-   ============================================================================ */
+/* DASHBOARD WRAPPER */
 
 .dashboard-wrapper {
   background: var(--bg-secondary);
   min-height: calc(100vh - 120px);
 }
 
-/* ============================================================================
-   HOME PAGE - Landing
-   ============================================================================ */
+/* HOME PAGE - Landing */
 
 .home-hero {
   background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
@@ -826,7 +855,6 @@ body {
   color: #4ade80;
 }
 
-/* Features Section */
 .home-features-section {
   padding: 6rem 0;
   background: var(--bg-secondary);
@@ -916,9 +944,7 @@ body {
   opacity: 0.95;
 }
 
-/* ============================================================================
-   UTILITIES
-   ============================================================================ */
+/* UTILITIES */
 
 .gradient-bg {
   background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);

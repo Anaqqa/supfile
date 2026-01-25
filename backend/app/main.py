@@ -5,9 +5,12 @@ from app.routers import auth, users, files, folders, shares
 from app.database import init_db
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
+    title="SUPFile",
     description="API Backend pour SUPFile - Cloud Storage",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 app.add_middleware(
