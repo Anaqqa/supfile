@@ -323,7 +323,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
 }
 
@@ -334,7 +334,8 @@ body {
 
 .storage-badge-text {
   color: var(--text-primary);
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
 }
 
 .storage-badge-text .used {

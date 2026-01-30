@@ -1,31 +1,30 @@
 import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
-import { api } from '../services/api';
 import { fileService } from '../services/fileService';
+import { useAuth } from './AuthContext';
 
 export const FileContext = createContext(null);
 
 export const useFileContext = () => useContext(FileContext);
 
 export const FileProvider = ({ children }) => {
+  const { refreshUser } = useAuth();
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
   const [currentFolder, setCurrentFolder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
   
+  // Fonction pour déclencher un rafraîchissement
   const refresh = useCallback(() => {
     setRefreshTrigger(prev => prev + 1);
   }, []);
 
-  
   const fetchContents = useCallback(async (folderId = null) => {
     setLoading(true);
     setError(null);
 
     try {
-      
       if (folderId) {
         const folderData = await fileService.getFolderDetails(folderId);
         setCurrentFolder(folderData);
@@ -33,7 +32,6 @@ export const FileProvider = ({ children }) => {
         setCurrentFolder(null);
       }
 
-      
       const [filesData, foldersData] = await Promise.all([
         fileService.getFiles(folderId),
         fileService.getFolders(folderId)
@@ -41,6 +39,7 @@ export const FileProvider = ({ children }) => {
 
       setFiles(filesData);
       setFolders(foldersData);
+      
     } catch (err) {
       console.error('Erreur lors du chargement des fichiers/dossiers:', err);
       setError(err.response?.data?.detail || 'Erreur lors du chargement des données');
@@ -48,8 +47,14 @@ export const FileProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
-
   
+  // Effet pour recharger automatiquement quand refresh() est appelé
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      fetchContents(currentFolder?.id || null);
+    }
+  }, [refreshTrigger, currentFolder, fetchContents]);
+
   const createFolder = useCallback(async (name, parentId = null) => {
     setLoading(true);
     setError(null);
@@ -67,7 +72,6 @@ export const FileProvider = ({ children }) => {
     }
   }, [refresh]);
 
-  
   const renameItem = useCallback(async (itemId, newName, isFolder = false) => {
     setLoading(true);
     setError(null);
@@ -89,7 +93,6 @@ export const FileProvider = ({ children }) => {
     }
   }, [refresh]);
 
-  
   const moveItem = useCallback(async (itemId, newFolderId, isFolder = false) => {
     setLoading(true);
     setError(null);
@@ -111,7 +114,6 @@ export const FileProvider = ({ children }) => {
     }
   }, [refresh]);
 
-  
   const deleteItem = useCallback(async (itemId, isFolder = false, permanent = false) => {
     setLoading(true);
     setError(null);
@@ -122,6 +124,11 @@ export const FileProvider = ({ children }) => {
       } else {
         await fileService.deleteFile(itemId, permanent);
       }
+      
+      if (permanent) {
+        await refreshUser();
+      }
+      
       refresh();
       return true;
     } catch (err) {
@@ -131,9 +138,8 @@ export const FileProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [refresh]);
+  }, [refresh, refreshUser]);
 
-  
   const restoreItem = useCallback(async (itemId, isFolder = false) => {
     setLoading(true);
     setError(null);
@@ -155,7 +161,6 @@ export const FileProvider = ({ children }) => {
     }
   }, [refresh]);
 
-  
   const downloadFile = useCallback(async (fileId) => {
     try {
       await fileService.downloadFile(fileId);
@@ -167,7 +172,6 @@ export const FileProvider = ({ children }) => {
     }
   }, []);
 
-  
   const downloadFolder = useCallback(async (folderId) => {
     try {
       await fileService.downloadFolder(folderId);
@@ -179,7 +183,6 @@ export const FileProvider = ({ children }) => {
     }
   }, []);
 
-  
   const createShareLink = useCallback(async (fileId, expiresAt = null) => {
     setLoading(true);
     setError(null);
@@ -196,7 +199,6 @@ export const FileProvider = ({ children }) => {
     }
   }, []);
 
-  
   const deleteShareLink = useCallback(async (shareId) => {
     setLoading(true);
     setError(null);
@@ -213,7 +215,6 @@ export const FileProvider = ({ children }) => {
     }
   }, []);
 
-  
   const searchItems = useCallback(async (searchTerm, folderId = null) => {
     setLoading(true);
     setError(null);
@@ -230,7 +231,6 @@ export const FileProvider = ({ children }) => {
     }
   }, []);
 
-  
   const getTrashedItems = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -251,13 +251,13 @@ export const FileProvider = ({ children }) => {
     }
   }, []);
 
-  
   const emptyTrash = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
       await fileService.emptyTrash();
+      await refreshUser();
       refresh();
       return true;
     } catch (err) {
@@ -267,14 +267,14 @@ export const FileProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [refresh]);
+  }, [refresh, refreshUser]);
 
-  
   const uploadFile = useCallback(async (file, folderId = null, onProgress) => {
     setError(null);
 
     try {
       const response = await fileService.uploadFile(file, folderId, onProgress);
+      await refreshUser();
       refresh();
       return response;
     } catch (err) {
@@ -282,9 +282,8 @@ export const FileProvider = ({ children }) => {
       setError(err.response?.data?.detail || 'Erreur lors du téléversement');
       return null;
     }
-  }, [refresh]);
+  }, [refresh, refreshUser]);
 
-  
   const value = {
     files,
     folders,

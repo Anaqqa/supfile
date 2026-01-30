@@ -16,6 +16,7 @@ import DeleteConfirmModal from './DeleteConfirmModal';
 import CustomToast from '../Shared/CustomToast';
 
 
+
 const FileExplorer = ({ searchQuery = '' }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -45,6 +46,8 @@ const FileExplorer = ({ searchQuery = '' }) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+  const [currentQuota, setCurrentQuota] = useState(0);
+  const { user, refreshUser } = useAuth();
 
   const openShareModal = (file) => {
     setFileToShare(file);
@@ -109,6 +112,12 @@ const FileExplorer = ({ searchQuery = '' }) => {
       setBreadcrumbs([{ id: null, name: 'Racine', path: '/dashboard' }]);
     }
   }, [currentFolder]);
+
+  // Re-render automatique quand le quota change
+  useEffect(() => {
+    console.log('Quota mis à jour:', user?.storage_used);
+  }, [user?.storage_used]);
+
   
   const handleDragStart = (e, item, isFolder) => {
     e.stopPropagation();
@@ -308,6 +317,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
 
   const handleUploadComplete = () => {
     fetchContents(currentFolder?.id || null);
+    window.location.reload();
   };
 
   if (loading) return <Loading />;
@@ -315,7 +325,6 @@ const FileExplorer = ({ searchQuery = '' }) => {
 
   return (
     <Container fluid>
-      {/* ❌ SUPPRIMÉ : Barre de recherche locale */}
       {/* Barre de navigation (breadcrumb uniquement) */}
       <Row className="mb-3 align-items-center">
         <Col md={12}>
@@ -383,7 +392,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
           
           {/* Badge de quota */}
           {user && (
-            <div className="storage-badge">
+            <div className="storage-badge" key={`storage-${user.storage_used}`}>
               <div className="storage-badge-header">
                 <i className="bi bi-hdd-fill"></i>
                 <span className="storage-badge-text">
