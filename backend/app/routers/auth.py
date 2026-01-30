@@ -14,20 +14,34 @@ from app.utils.security import create_access_token
 
 router = APIRouter()
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=LoginResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
     """
-    Créer un nouveau compte utilisateur
+    Créer un nouveau compte utilisateur et retourner un token d'accès
     
     - **email**: Email valide (unique)
     - **password**: Mot de passe (minimum 8 caractères)
     - **full_name**: Nom complet (optionnel)
     """
     user = AuthService.register_user(db, user_data)
-    return user
+    
+    # Créer un token d'accès pour l'utilisateur nouvellement inscrit
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "storage_used": user.storage_used,
+            "storage_quota": user.storage_quota
+        }
+    }
 
 @router.post("/login", response_model=LoginResponse)
 async def login(
