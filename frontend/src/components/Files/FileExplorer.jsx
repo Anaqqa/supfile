@@ -18,7 +18,6 @@ import CustomToast from '../Shared/CustomToast';
 
 
 const FileExplorer = ({ searchQuery = '' }) => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { 
@@ -46,8 +45,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
-  const [currentQuota, setCurrentQuota] = useState(0);
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
 
   const openShareModal = (file) => {
     setFileToShare(file);
