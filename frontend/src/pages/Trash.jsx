@@ -17,14 +17,14 @@ const Trash = () => {
   const [showEmptyConfirm, setShowEmptyConfirm] = useState(false);
   const [isEmptying, setIsEmptying] = useState(false);
   const [localLoading, setLocalLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   const loadTrashedItems = async () => {
     setLocalLoading(true);
     try {
-      
       const files = await fileService.getTrashedFiles();
       const folders = await fileService.getTrashedFolders();
-      
       
       const filteredFiles = files.filter(file => file.is_deleted === true);
       const filteredFolders = folders.filter(folder => folder.is_deleted === true);
@@ -57,12 +57,21 @@ const Trash = () => {
     }
   };
 
-  const handleDelete = async (itemId, isFolder) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer définitivement cet élément ?')) {
-      await deleteItem(itemId, isFolder, true); 
-      await loadTrashedItems();  
-    }
+  const openDeleteModal = (itemId, itemName, isFolder) => {
+    setItemToDelete({ id: itemId, name: itemName, isFolder });
+    setShowDeleteModal(true);
   };
+  
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    
+    await deleteItem(itemToDelete.id, itemToDelete.isFolder, true);
+    await loadTrashedItems();
+    
+    setShowDeleteModal(false);
+    setItemToDelete(null);
+  };
+
   const handleEmptyTrash = async () => {
     setIsEmptying(true);
     try {
@@ -147,7 +156,7 @@ const Trash = () => {
                       <Button 
                         variant="outline-danger" 
                         size="sm"
-                        onClick={() => handleDelete(folder.id, true)}
+                        onClick={() => openDeleteModal(folder.id, folder.name, true)}
                       >
                         <i className="bi bi-trash"></i>
                       </Button>
@@ -179,7 +188,7 @@ const Trash = () => {
                       <Button 
                         variant="outline-danger" 
                         size="sm"
-                        onClick={() => handleDelete(file.id, false)}
+                        onClick={() => openDeleteModal(file.id, file.name, false)}
                       >
                         <i className="bi bi-trash"></i>
                       </Button>
@@ -219,6 +228,27 @@ const Trash = () => {
             ) : (
               <>Vider la corbeille</>
             )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      
+      {/* Modal de confirmation suppression définitive */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Supprimer définitivement</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-0">
+            Êtes-vous sûr de vouloir supprimer définitivement <strong>{itemToDelete?.name}</strong> ? 
+            Cette action est irréversible.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Annuler
+          </Button>
+          <Button variant="danger" onClick={handleDeleteConfirm}>
+            Supprimer définitivement
           </Button>
         </Modal.Footer>
       </Modal>
