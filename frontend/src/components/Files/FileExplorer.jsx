@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Button, Card, Table, Breadcrumb, Dropdown, Badge, Alert } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFileContext } from '../../contexts/FileContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { formatFileSize, formatDate } from '../../utils/formatters';
 import FilePreview from './FilePreview';
 import FileUpload from './FileUpload';
@@ -14,7 +15,9 @@ import ShareModal from './ShareModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import CustomToast from '../Shared/CustomToast';
 
+
 const FileExplorer = ({ searchQuery = '' }) => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { 
@@ -361,20 +364,43 @@ const FileExplorer = ({ searchQuery = '' }) => {
         </Row>
       )}
 
-      {/* Actions */}
+      {/* Actions avec quota */}
       <Row className="mb-3">
-        <Col>
-          <FileUpload 
-            currentFolderId={currentFolder?.id || null}
-            onUploadComplete={handleUploadComplete}
-          />
-          <Button 
-            variant="outline-primary" 
-            className="ms-2"
-            onClick={() => setShowCreateModal(true)}
-          >
-            <i className="bi bi-folder-plus me-1"></i> Nouveau dossier
-          </Button>
+        <Col className="d-flex justify-content-between align-items-center">
+          <div>
+            <FileUpload 
+              currentFolderId={currentFolder?.id || null}
+              onUploadComplete={handleUploadComplete}
+            />
+            <Button 
+              variant="outline-primary" 
+              className="ms-2"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <i className="bi bi-folder-plus me-1"></i> Nouveau dossier
+            </Button>
+          </div>
+          
+          {/* Badge de quota */}
+          {user && (
+            <div className="storage-badge">
+              <div className="storage-badge-header">
+                <i className="bi bi-hdd-fill"></i>
+                <span className="storage-badge-text">
+                  Stockage : <span className="used">{formatFileSize(user.storage_used)}</span> / {formatFileSize(user.storage_quota)}
+                </span>
+              </div>
+              <div className="storage-progress-bar">
+                <div 
+                  className={`storage-progress-fill ${
+                    (user.storage_used / user.storage_quota) * 100 > 90 ? 'danger' : 
+                    (user.storage_used / user.storage_quota) * 100 > 75 ? 'warning' : ''
+                  }`}
+                  style={{ width: `${Math.min((user.storage_used / user.storage_quota) * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
         </Col>
       </Row>
 
