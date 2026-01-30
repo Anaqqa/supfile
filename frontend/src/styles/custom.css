@@ -549,6 +549,8 @@ body {
   font-size: 1.125rem;
   opacity: 0;
   transition: all var(--transition-normal);
+  position: relative;
+  z-index: 10; 
 }
 
 .modern-table tbody tr:hover .actions-dropdown .dropdown-toggle {
@@ -565,6 +567,7 @@ body {
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
   padding: 0.5rem;
+  z-index: 1050;
 }
 
 .actions-dropdown .dropdown-item {
