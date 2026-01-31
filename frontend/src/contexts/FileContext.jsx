@@ -53,7 +53,7 @@ export const FileProvider = ({ children }) => {
     if (refreshTrigger > 0) {
       fetchContents(currentFolder?.id || null);
     }
-  }, [refreshTrigger, currentFolder, fetchContents]);
+  }, [refreshTrigger, fetchContents]);
 
   const createFolder = useCallback(async (name, parentId = null) => {
     setLoading(true);
