@@ -19,13 +19,10 @@ router = APIRouter()
 async def create_folder(
     folder_data: FolderCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+   current_user = Depends(get_current_active_user)
 ):
     """
-    Créer un nouveau dossier
-    
-    - **name**: Nom du dossier
-    - **parent_id**: ID du dossier parent (optionnel)
+    Création dossier avec validation parent si spécifié
     """
     return await FolderService.create_folder(db, folder_data, current_user.id)
 
@@ -34,21 +31,20 @@ async def get_folders(
     parent_id: Optional[int] = None,
     show_deleted: bool = False,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)
 ):
     """
-    Récupérer la liste des dossiers de l'utilisateur
-    
-    - **parent_id**: Filtrer par dossier parent (optionnel)
-    - **show_deleted**: Inclure les dossiers dans la corbeille
+    Liste dossiers avec filtres sur parent et corbeille
     """
     query = select(Folder).where(Folder.user_id == current_user.id)
     
+    # Filtre corbeille
     if show_deleted:
         query = query.where(Folder.is_deleted == True)
     else:
         query = query.where(Folder.is_deleted == False)
         
+        # Filtre parent (None = racine)
         if parent_id is not None:
             query = query.where(Folder.parent_id == parent_id)
         else:
@@ -61,12 +57,10 @@ async def get_folders(
 async def get_folder(
     folder_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)
 ):
     """
-    Récupérer les détails d'un dossier
-    
-    - **folder_id**: ID du dossier à récupérer
+    Détails dossier avec vérification propriété
     """
     folder = await FolderService.get_folder(db, folder_id, current_user.id)
     if not folder:
@@ -82,14 +76,10 @@ async def update_folder(
     folder_id: int,
     folder_data: dict,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)
 ):
     """
-    Mettre à jour un dossier (renommer, déplacer)
-    
-    - **folder_id**: ID du dossier à mettre à jour
-    - **name**: Nouveau nom (optionnel)
-    - **parent_id**: Nouvel ID de dossier parent (optionnel)
+    Mise à jour dossier : renommage ou déplacement avec validation cycles
     """
     folder = await FolderService.update_folder(db, folder_id, folder_data, current_user.id)
     if not folder:
@@ -106,14 +96,10 @@ async def delete_folder(
     permanent: bool = False,
     recursive: bool = True,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)
 ):
     """
-    Supprimer un dossier (déplacer dans la corbeille ou supprimer définitivement)
-    
-    - **folder_id**: ID du dossier à supprimer
-    - **permanent**: Si vrai, supprime définitivement le dossier
-    - **recursive**: Si vrai, supprime récursivement tous les sous-dossiers et fichiers
+    Suppression dossier : recursive=True supprime contenu, permanent=True bypass corbeille
     """
     success = await FolderService.delete_folder(db, folder_id, current_user.id, permanent, recursive)
     if not success:
@@ -129,13 +115,10 @@ async def restore_folder(
     folder_id: int,
     recursive: bool = True,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)
 ):
     """
-    Restaurer un dossier depuis la corbeille
-    
-    - **folder_id**: ID du dossier à restaurer
-    - **recursive**: Si vrai, restaure récursivement tous les sous-dossiers et fichiers
+    Restauration dossier depuis corbeille avec contenu si recursive=True
     """
     success = await FolderService.restore_folder(db, folder_id, current_user.id, recursive)
     if not success:
@@ -150,12 +133,10 @@ async def restore_folder(
 async def download_folder(
     folder_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_user)
 ):
     """
-    Télécharger un dossier complet sous forme de ZIP
-    
-    - **folder_id**: ID du dossier à télécharger
+    Téléchargement dossier complet en ZIP avec arborescence préservée
     """
     folder_data = await FolderService.get_folder_contents_for_download(db, folder_id, current_user.id)
     if not folder_data:
@@ -164,10 +145,12 @@ async def download_folder(
             detail="Dossier non trouvé ou vide"
         )
     
+    # Création ZIP en mémoire (streaming)
     zip_io = io.BytesIO()
     with zipfile.ZipFile(zip_io, mode='w', compression=zipfile.ZIP_DEFLATED) as zip_file:
         folder_name = folder_data["name"]
         
+        # Ajout fichiers avec chemins relatifs
         for file_path, file_info in folder_data["files"].items():
             zip_file.write(
                 file_info["path"], 

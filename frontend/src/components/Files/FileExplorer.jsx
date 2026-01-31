@@ -15,8 +15,6 @@ import ShareModal from './ShareModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import CustomToast from '../Shared/CustomToast';
 
-
-
 const FileExplorer = ({ searchQuery = '' }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -82,12 +80,14 @@ const FileExplorer = ({ searchQuery = '' }) => {
     }
   };
 
+  // Chargement initial basé sur URL params (deep linking)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const folderId = params.get('folder') ? parseInt(params.get('folder')) : null;
     fetchContents(folderId);
   }, [location.search, fetchContents]);
 
+  // Filtrage client-side pour recherche instantanée
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredItems({ files, folders });
@@ -99,6 +99,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
     }
   }, [files, folders, searchQuery]);
 
+  // Construction breadcrumb pour navigation hiérarchique
   useEffect(() => {
     if (currentFolder) {
       const breadcrumbsList = [
@@ -111,12 +112,13 @@ const FileExplorer = ({ searchQuery = '' }) => {
     }
   }, [currentFolder]);
 
-  // Re-render automatique quand le quota change
+  // Re-render automatique quand quota change (upload/delete)
   useEffect(() => {
     console.log('Quota mis à jour:', user?.storage_used);
   }, [user?.storage_used]);
 
   
+  // DRAG & DROP : Stockage des données item déplacé
   const handleDragStart = (e, item, isFolder) => {
     e.stopPropagation();
     
@@ -132,8 +134,10 @@ const FileExplorer = ({ searchQuery = '' }) => {
     
     setDraggedItem(dragData);
     
+    // Désactivation navbar pendant drag pour éviter drops accidentels
     document.body.classList.add('dragging');
     
+    // Effet visuel de transparence
     setTimeout(() => {
       e.target.style.opacity = '0.4';
     }, 0);
@@ -148,12 +152,14 @@ const FileExplorer = ({ searchQuery = '' }) => {
     document.body.classList.remove('dragging'); 
   };
 
+  // Validation drop autorisé (pas sur soi-même)
   const handleDragOver = (e, folder) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (!draggedItem) return;
     
+    // Empêche dossier de se déplacer sur lui-même
     if (draggedItem.isFolder && draggedItem.id === folder.id) {
       e.dataTransfer.dropEffect = 'none';
       return;
@@ -163,6 +169,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
     setDragOverFolder(folder.id);
   };
 
+  // Détection sortie zone drop pour retirer highlight
   const handleDragLeave = (e, folder) => {
     e.stopPropagation();
     
@@ -170,6 +177,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
     const x = e.clientX;
     const y = e.clientY;
     
+    // Vérification réelle sortie de zone (pas juste survol enfant)
     if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
       if (dragOverFolder === folder.id) {
         setDragOverFolder(null);
@@ -177,6 +185,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
     }
   };
 
+  // Drop sur dossier : déplacement item
   const handleDrop = async (e, targetFolder) => {
     e.preventDefault();
     e.stopPropagation();
@@ -193,6 +202,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
     
     if (!dragData) return;
     
+    // Double vérification cycle pour dossiers
     if (dragData.isFolder && dragData.id === targetFolder.id) {
       showToastNotification('Impossible de déplacer un dossier sur lui-même', 'warning');
       return;
@@ -226,6 +236,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
     setDraggedItem(null);
   };
 
+  // Drop sur zone vide : déplacement vers dossier actuel ou racine
   const handleDropOnRoot = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -326,7 +337,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
 
   return (
     <Container fluid>
-      {/* Barre de navigation (breadcrumb uniquement) */}
+      {/* Breadcrumb navigation */}
       <Row className="mb-3 align-items-center">
         <Col md={12}>
           <Breadcrumb>
@@ -343,7 +354,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
         </Col>
       </Row>
 
-      {/* Info Drag & Drop */}
+      {/* Info Drag & Drop active */}
       {draggedItem && (
         <Row className="mb-3">
           <Col>
@@ -374,7 +385,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
         </Row>
       )}
 
-      {/* Actions avec quota */}
+      {/* Actions + Badge quota temps réel */}
       <Row className="mb-3">
         <Col className="d-flex justify-content-between align-items-center">
           <div>
@@ -391,7 +402,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
             </Button>
           </div>
           
-          {/* Badge de quota */}
+          {/* Badge de quota avec barre progression */}
           {user && (
             <div className="storage-badge" key={`storage-${user.storage_used}`}>
               <div className="storage-badge-header">
@@ -414,7 +425,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
         </Col>
       </Row>
 
-      {/* Liste des fichiers et dossiers */}
+      {/* Table fichiers/dossiers avec drag & drop */}
       <Card>
         <Card.Body>
           <div 
@@ -458,7 +469,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
                   </tr>
                 )}
 
-                {/* Dossiers */}
+                {/* Dossiers (draggables + drop zones) */}
                 {filteredItems.folders.map((folder) => (
                   <tr 
                     key={`folder-${folder.id}`}
@@ -527,7 +538,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
                   </tr>
                 ))}
 
-                {/* Fichiers */}
+                {/* Fichiers (draggables uniquement) */}
                 {filteredItems.files.map((file) => (
                   <tr 
                     key={`file-${file.id}`}
@@ -642,7 +653,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
         loading={isDeleting}
       />
 
-      {/* Toast de notification */}
+      {/* Toast notifications non-bloquantes */}
       <CustomToast
         show={showToast}
         onClose={() => setShowToast(false)}
@@ -654,6 +665,7 @@ const FileExplorer = ({ searchQuery = '' }) => {
   );
 };
 
+// Helpers icônes et types fichiers
 const getFileIcon = (mimeType) => {
   if (!mimeType) return 'text-secondary';
   if (mimeType.startsWith('image/')) return 'text-success';

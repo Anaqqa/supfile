@@ -15,11 +15,12 @@ export const FileProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
-  // Fonction pour déclencher un rafraîchissement
+  // Déclencheur manuel rafraîchissement pour éviter prop drilling
   const refresh = useCallback(() => {
     setRefreshTrigger(prev => prev + 1);
   }, []);
 
+  // Chargement fichiers + dossiers pour un dossier donné
   const fetchContents = useCallback(async (folderId = null) => {
     setLoading(true);
     setError(null);
@@ -32,6 +33,7 @@ export const FileProvider = ({ children }) => {
         setCurrentFolder(null);
       }
 
+      // Chargement parallèle pour performance
       const [filesData, foldersData] = await Promise.all([
         fileService.getFiles(folderId),
         fileService.getFolders(folderId)
@@ -48,7 +50,7 @@ export const FileProvider = ({ children }) => {
     }
   }, []);
   
-  // Effet pour recharger automatiquement quand refresh() est appelé
+  // Auto-refresh quand trigger change (évite dépendances circulaires)
   useEffect(() => {
     if (refreshTrigger > 0) {
       fetchContents(currentFolder?.id || null);
@@ -114,6 +116,7 @@ export const FileProvider = ({ children }) => {
     }
   }, [refresh]);
 
+  // Suppression avec mise à jour quota si permanent=true
   const deleteItem = useCallback(async (itemId, isFolder = false, permanent = false) => {
     setLoading(true);
     setError(null);
@@ -125,6 +128,7 @@ export const FileProvider = ({ children }) => {
         await fileService.deleteFile(itemId, permanent);
       }
       
+      // Libération quota immédiate si suppression définitive
       if (permanent) {
         await refreshUser();
       }
@@ -251,6 +255,7 @@ export const FileProvider = ({ children }) => {
     }
   }, []);
 
+  // Vidage corbeille avec mise à jour quota
   const emptyTrash = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -269,6 +274,7 @@ export const FileProvider = ({ children }) => {
     }
   }, [refresh, refreshUser]);
 
+  // Upload avec mise à jour quota immédiate
   const uploadFile = useCallback(async (file, folderId = null, onProgress) => {
     setError(null);
 
@@ -284,6 +290,7 @@ export const FileProvider = ({ children }) => {
     }
   }, [refresh, refreshUser]);
 
+  // Valeur contexte exposée à tous les composants enfants
   const value = {
     files,
     folders,

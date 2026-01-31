@@ -23,10 +23,7 @@ async def upload_file(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Téléverser un fichier
-    
-    - **file**: Fichier à téléverser
-    - **folder_id**: ID du dossier de destination (optionnel)
+    Téléverser un fichier avec validation quota et dossier parent
     """
     return await FileService.upload_file(db, current_user, file, folder_id)
 
@@ -37,16 +34,18 @@ async def get_files(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    """
+    Liste fichiers utilisateur avec filtres sur dossier et corbeille
+    """
     query = select(FileModel).where(FileModel.user_id == current_user.id)
     
-    
+    # Filtre corbeille : show_deleted=True affiche uniquement corbeille
     if show_deleted:
-        
         query = query.where(FileModel.is_deleted == True)
     else:
-        
         query = query.where(FileModel.is_deleted == False)
         
+        # Filtre dossier parent (None = racine)
         if folder_id is not None:
             query = query.where(FileModel.folder_id == folder_id)
         else:
@@ -62,9 +61,7 @@ async def get_file(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Récupérer les détails d'un fichier
-    
-    - **file_id**: ID du fichier à récupérer
+    Détails fichier avec vérification propriété
     """
     file = await FileService.get_file(db, file_id, current_user.id)
     if not file:
@@ -83,11 +80,7 @@ async def update_file(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Mettre à jour un fichier (renommer, déplacer)
-    
-    - **file_id**: ID du fichier à mettre à jour
-    - **name**: Nouveau nom (optionnel)
-    - **folder_id**: Nouvel ID de dossier (optionnel)
+    Mise à jour fichier : renommage ou déplacement
     """
     file = await FileService.update_file(db, file_id, file_data, current_user.id)
     if not file:
@@ -106,10 +99,7 @@ async def delete_file(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Supprimer un fichier (déplacer dans la corbeille ou supprimer définitivement)
-    
-    - **file_id**: ID du fichier à supprimer
-    - **permanent**: Si vrai, supprime définitivement le fichier
+    Suppression fichier : corbeille (soft) ou définitive (hard)
     """
     success = await FileService.delete_file(db, file_id, current_user.id, permanent)
     if not success:
@@ -127,9 +117,7 @@ async def restore_file(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Restaurer un fichier depuis la corbeille
-    
-    - **file_id**: ID du fichier à restaurer
+    Restauration fichier depuis corbeille
     """
     success = await FileService.restore_file(db, file_id, current_user.id)
     if not success:
@@ -147,7 +135,7 @@ async def download_file(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Télécharger un fichier
+    Téléchargement fichier avec nom original préservé
     """
     file = await FileService.get_file_with_path(db, file_id, current_user.id)
     if not file:
@@ -163,7 +151,8 @@ async def download_file(
             detail="Fichier non trouvé sur le serveur"
         )
     
-    return FastAPIFileResponse(  # ← CHANGE ICI
+    # Header Content-Disposition force le téléchargement
+    return FastAPIFileResponse(
         path=filepath,
         filename=file.original_name,
         media_type=file.mime_type
@@ -176,9 +165,7 @@ async def preview_file(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Prévisualiser un fichier
-    
-    - **file_id**: ID du fichier à prévisualiser
+    Prévisualisation fichier sans header download (affichage navigateur)
     """
     file = await FileService.get_file_with_path(db, file_id, current_user.id)
     if not file:
@@ -194,7 +181,8 @@ async def preview_file(
             detail="Fichier non trouvé sur le serveur"
         )
     
-    return FastAPIFileResponse(  # ← CHANGE ICI
+    # Pas de Content-Disposition = affichage navigateur
+    return FastAPIFileResponse(
         path=filepath,
         media_type=file.mime_type
     )
@@ -207,10 +195,7 @@ async def search_items(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Rechercher des fichiers et dossiers par nom
-    
-    - **q**: Terme de recherche
-    - **folder_id**: Limiter la recherche à un dossier (optionnel)
+    Recherche fichiers et dossiers par nom (case insensitive)
     """
     from app.services.folder_service import FolderService
     

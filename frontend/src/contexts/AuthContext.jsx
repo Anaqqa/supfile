@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
+  // Chargement utilisateur au montage (restauration session JWT)
   useEffect(() => {
     const token = localStorage.getItem('token');
     
@@ -26,6 +27,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Erreur de chargement utilisateur:', error);
+        // Token expiré/invalide → nettoyage
         localStorage.removeItem('token');
       } finally {
         setLoading(false);
@@ -35,6 +37,7 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
   
+  // Inscription avec connexion automatique (retourne token immédiatement)
   const register = async (email, password, fullName = '') => {
     try {
       const response = await authService.register(email, password, fullName);
@@ -51,8 +54,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
   
+  // Connexion double usage : classique (email/pass) ou OAuth (token direct)
   const login = async (emailOrToken, password = null) => {
     try {
+      // Mode OAuth : token passé directement (callback Google)
       if (password === null) {
         localStorage.setItem('token', emailOrToken);
         
@@ -62,6 +67,7 @@ export const AuthProvider = ({ children }) => {
         return response.data;
       }
       
+      // Mode classique : email + password
       const response = await authService.login(emailOrToken, password);
       
       const { access_token, user } = response;
@@ -82,6 +88,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
   
+  // Rechargement profil utilisateur (après update quota, settings, etc.)
   const refreshUser = async () => {
     try {
       const response = await api.get('/auth/me');
@@ -92,6 +99,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
   
+  // Valeur contexte exposée à toute l'app
   const value = {
     user: currentUser,
     isAuthenticated,

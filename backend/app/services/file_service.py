@@ -18,25 +18,26 @@ class FileService:
     
     @staticmethod
     async def upload_file(db: Session, user: User, file: UploadFile, folder_id: int = None):
-        """
-        Téléverse un fichier sur le serveur et crée l'entrée en base de données
-        """
-        file.file.seek(0, 2)  
-        file_size = file.file.tell()  
-        file.file.seek(0)  
+        # Calcul de la taille totale pour vérification quota
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
         
+        # Blocage upload si dépassement de la limite par fichier
         if file_size > settings.MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=f"Le fichier est trop volumineux (max: {settings.MAX_FILE_SIZE // 1024 // 1024} Mo)"
             )
-            
+        
+        # Vérification quota utilisateur avant stockage physique
         if user.storage_used + file_size > user.storage_quota:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail="Quota de stockage dépassé"
             )
         
+        # Validation dossier parent si spécifié
         if folder_id:
             folder = db.execute(
                 select(Folder).where(
@@ -53,15 +54,19 @@ class FileService:
                 )
         
         os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+        
+        # UUID garantit l'unicité même en cas d'upload concurrent
         file_uuid = str(uuid.uuid4())
         file_path = os.path.join(settings.UPLOAD_DIR, file_uuid)
         
+        # Écriture asynchrone pour ne pas bloquer les autres requêtes
         async with aiofiles.open(file_path, 'wb') as f:
             content = await file.read()
             await f.write(content)
         
         file_extension = os.path.splitext(file.filename)[1].lower()
 
+        # Mapping manuel pour Markdown car magic ne le détecte pas toujours
         mime_type_map = {
             '.md': 'text/markdown',
             '.markdown': 'text/markdown',
@@ -71,6 +76,7 @@ class FileService:
         if file_extension in mime_type_map:
             mime_type = mime_type_map[file_extension]
         else:
+            # Magic analyse le contenu réel, plus fiable que l'extension (sécurité)
             mime_type = magic.from_file(file_path, mime=True)
         
         db_file = File(
@@ -85,6 +91,7 @@ class FileService:
         
         db.add(db_file)
         
+        # Mise à jour immédiate du quota utilisateur
         user.storage_used += file_size
         
         db.commit()
@@ -98,13 +105,9 @@ class FileService:
             message="Fichier téléversé avec succès"
         )
                    
-            
-            
     @staticmethod
     async def get_user_files(db: Session, user_id: int, folder_id: int = None, show_deleted: bool = False):
-        """
-        Récupère les fichiers de l'utilisateur, éventuellement filtrés par dossier
-        """
+        # Construction requête avec filtres sur utilisateur et corbeille
         query = select(File).where(File.user_id == user_id)
         
         if not show_deleted:
@@ -120,9 +123,7 @@ class FileService:
     
     @staticmethod
     async def get_file(db: Session, file_id: int, user_id: int):
-        """
-        Récupère un fichier par ID, vérifie qu'il appartient à l'utilisateur
-        """
+        # Vérification propriété pour éviter accès non autorisé
         file = db.execute(
             select(File).where(
                 File.id == file_id,
@@ -134,9 +135,7 @@ class FileService:
     
     @staticmethod
     async def get_file_with_path(db: Session, file_id: int, user_id: int):
-        """
-        Récupère un fichier par ID avec son chemin physique
-        """
+        # Validation métadonnées ET existence physique du fichier
         file = await FileService.get_file(db, file_id, user_id)
         if not file:
             return None
@@ -148,17 +147,16 @@ class FileService:
     
     @staticmethod
     async def update_file(db: Session, file_id: int, file_data: FileUpdate, user_id: int):
-        """
-        Met à jour un fichier (renommage, déplacement)
-        """
         file = await FileService.get_file(db, file_id, user_id)
         if not file:
             return None
-            
+        
+        # Gestion déplacement vers racine (folder_id = 0)
         if file_data.folder_id is not None:
-            if file_data.folder_id == 0:  
+            if file_data.folder_id == 0:
                 file.folder_id = None
             else:
+                # Validation dossier de destination
                 folder = db.execute(
                     select(Folder).where(
                         Folder.id == file_data.folder_id,
@@ -185,22 +183,22 @@ class FileService:
     
     @staticmethod
     async def delete_file(db: Session, file_id: int, user_id: int, permanent: bool = False):
-        """
-        Supprime un fichier (corbeille ou définitif)
-        """
         file = await FileService.get_file(db, file_id, user_id)
         if not file:
             return False
-            
+        
         if permanent:
+            # Suppression physique du fichier
             if os.path.exists(file.storage_path):
                 os.remove(file.storage_path)
-                
+            
+            # Libération quota utilisateur
             user = db.execute(select(User).where(User.id == user_id)).scalar_one()
             user.storage_used = max(0, user.storage_used - file.size)
                 
             db.delete(file)
         else:
+            # Déplacement corbeille avec horodatage
             file.is_deleted = True
             file.deleted_at = datetime.datetime.now(datetime.timezone.utc)
             
@@ -209,9 +207,7 @@ class FileService:
     
     @staticmethod
     async def restore_file(db: Session, file_id: int, user_id: int):
-        """
-        Restaure un fichier depuis la corbeille
-        """
+        # Récupération depuis corbeille uniquement
         file = db.execute(
             select(File).where(
                 File.id == file_id,
@@ -223,6 +219,7 @@ class FileService:
         if not file:
             return False
         
+        # Vérification dossier parent toujours existant
         if file.folder_id:
             folder = db.execute(
                 select(Folder).where(
@@ -231,6 +228,7 @@ class FileService:
                 )
             ).scalar_one_or_none()
             
+            # Déplacement racine si parent supprimé
             if not folder:
                 file.folder_id = None
         
@@ -242,9 +240,6 @@ class FileService:
     
     @staticmethod
     async def get_trashed_files(db: Session, user_id: int):
-        """
-        Récupère tous les fichiers dans la corbeille de l'utilisateur
-        """
         files = db.execute(
             select(File).where(
                 File.user_id == user_id,
@@ -256,19 +251,18 @@ class FileService:
     
     @staticmethod
     async def empty_trash(db: Session, user_id: int):
-        """
-        Vide la corbeille de l'utilisateur (suppression définitive)
-        """
         trashed_files = await FileService.get_trashed_files(db, user_id)
         
         space_freed = 0
         for file in trashed_files:
+            # Suppression physique
             if os.path.exists(file.storage_path):
                 os.remove(file.storage_path)
                 
             space_freed += file.size
             db.delete(file)
         
+        # Libération quota cumulé
         if space_freed > 0:
             user = db.execute(select(User).where(User.id == user_id)).scalar_one()
             user.storage_used = max(0, user.storage_used - space_freed)
@@ -279,9 +273,7 @@ class FileService:
     
     @staticmethod
     async def search_files(db: Session, user_id: int, search_term: str, folder_id: int = None):
-        """
-        Recherche des fichiers par nom
-        """
+        # Recherche insensible à la casse avec ILIKE
         query = select(File).where(
             File.user_id == user_id,
             File.is_deleted == False,

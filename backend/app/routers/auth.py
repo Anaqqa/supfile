@@ -20,15 +20,11 @@ async def register(
     db: Session = Depends(get_db)
 ):
     """
-    Créer un nouveau compte utilisateur et retourner un token d'accès
-    
-    - **email**: Email valide (unique)
-    - **password**: Mot de passe (minimum 8 caractères)
-    - **full_name**: Nom complet (optionnel)
+    Inscription avec retour token pour connexion automatique
     """
     user = AuthService.register_user(db, user_data)
     
-    # Créer un token d'accès pour l'utilisateur nouvellement inscrit
+    # Token créé immédiatement pour éviter double connexion
     access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
     
     return {
@@ -49,12 +45,7 @@ async def login(
     db: Session = Depends(get_db)
 ):
     """
-    Se connecter et obtenir un token JWT
-    
-    - **email**: Email du compte
-    - **password**: Mot de passe
-    
-    Retourne un token d'accès valide 30 minutes
+    Connexion classique avec validation email/password
     """
     result = AuthService.authenticate_user(db, login_data)
     return result
@@ -64,9 +55,7 @@ async def get_current_user_info(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Récupérer les informations de l'utilisateur connecté
-    
-    Nécessite un token JWT valide dans le header Authorization
+    Profil utilisateur authentifié via JWT
     """
     return current_user
 
@@ -75,18 +64,14 @@ async def logout(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Se déconnecter (côté client, supprimer le token)
-    
-    Note: Avec JWT, la déconnexion est gérée côté client
+    Déconnexion côté client (JWT stateless)
     """
     return {"message": "Successfully logged out"}
 
 @router.get("/google")
 async def google_login():
     """
-    Redirection vers la page de connexion Google
-    
-    Cette route redirige l'utilisateur vers la page de connexion Google
+    Redirection OAuth2 Google avec scopes email et profile
     """
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(
@@ -97,6 +82,7 @@ async def google_login():
     redirect_uri = settings.GOOGLE_REDIRECT_URI
     scope = "openid email profile"
     
+    # Construction URL autorisation Google
     auth_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth"
         f"?client_id={settings.GOOGLE_CLIENT_ID}"
@@ -115,12 +101,10 @@ async def google_callback(
     db: Session = Depends(get_db)
 ):
     """
-    Callback de l'authentification Google
-    
-    Cette route est appelée par Google après que l'utilisateur se soit connecté
+    Callback OAuth2 : échange code contre token puis création/connexion user
     """
     code = request.query_params.get("code")
-    frontend_url = "http://localhost:3000/auth/callback"  
+    frontend_url = "http://localhost:3000/auth/callback"
     
     if not code:
         return RedirectResponse(
@@ -128,6 +112,7 @@ async def google_callback(
         )
     
     try:
+        # Échange code contre access_token Google
         token_response = await OAuthService.get_google_token(code)
         access_token = token_response.get("access_token")
         
@@ -136,13 +121,16 @@ async def google_callback(
                 url=f"{frontend_url}?error=no_token"
             )
         
+        # Récupération infos utilisateur Google
         user_info = await OAuthService.get_google_user_info(access_token)
         
+        # Création ou récupération utilisateur local
         user = OAuthService.find_or_create_oauth_user(db, user_info, "google")
         
+        # Génération JWT SUPFile
         access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
         
-
+        # Redirection frontend avec token en query param
         return RedirectResponse(
             url=f"{frontend_url}?token={access_token}"
         )

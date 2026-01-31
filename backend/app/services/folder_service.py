@@ -16,7 +16,7 @@ class FolderService:
         """
         Crée un nouveau dossier
         """
-        
+        # Validation parent si spécifié pour éviter dossiers orphelins
         if folder_data.parent_id:
             parent = db.execute(
                 select(Folder).where(
@@ -46,7 +46,7 @@ class FolderService:
         return db_folder
     
     @staticmethod
-    async def get_user_folders(db: Session, user_id: int, parent_id: int = None, show_deleted: bool = False):
+    async def get_user_folders(db: Session, user_id: int, parent_id: int | None = None, show_deleted: bool = False):
         """
         Récupère les dossiers de l'utilisateur, éventuellement filtrés par dossier parent
         """
@@ -92,14 +92,14 @@ class FolderService:
             if folder_data['parent_id'] == 0:  
                 folder.parent_id = None
             else:
-                
+                # Empêche déplacement vers soi-même
                 if folder_data['parent_id'] == folder_id:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Un dossier ne peut pas être son propre parent"
                     )
                     
-                
+                # Détection cycle : empêche A->B->C->A
                 def is_descendant(parent_id, child_id):
                     if parent_id is None:
                         return False
@@ -162,10 +162,10 @@ class FolderService:
         if permanent:
             
             if recursive:
-                
+                # Récupération récursive contenu avant suppression
                 files, subfolders = await FolderService._get_folder_contents_recursive(db, folder_id)
                 
-                
+                # Suppression physique fichiers + libération quota
                 for file in files:
                     if os.path.exists(file.storage_path):
                         os.remove(file.storage_path)
@@ -179,7 +179,7 @@ class FolderService:
                     
                     db.delete(file)
                 
-                
+                # Suppression cascade dossiers
                 for subfolder in subfolders:
                     db.delete(subfolder)
                     
@@ -215,9 +215,12 @@ class FolderService:
                 
                 await FolderService._mark_as_deleted_recursive(db, folder_id)
             
-            
-            folder.is_deleted = True
-            folder.deleted_at = datetime.datetime.now(datetime.timezone.utc)
+            now = datetime.datetime.now(datetime.timezone.utc)
+            db.execute(
+                update(Folder)
+                .where(Folder.id == folder_id)
+                .values(is_deleted=True, deleted_at=now)
+            )
             
         db.commit()
         return True
@@ -238,8 +241,8 @@ class FolderService:
         if not folder:
             return False
             
-        
-        if folder.parent_id:
+        # Vérification parent toujours actif
+        if folder.parent_id is not None:
             parent = db.execute(
                 select(Folder).where(
                     Folder.id == folder.parent_id,
@@ -247,14 +250,21 @@ class FolderService:
                 )
             ).scalar_one_or_none()
             
+            # Déplacement racine si parent supprimé
             if not parent:
+                db.execute(
+                    update(Folder)
+                    .where(Folder.id == folder_id)
+                    .values(parent_id=None)
+                )
                 
-                
-                folder.parent_id = None
-                
-        folder.is_deleted = False
-        folder.deleted_at = None
+        db.execute(
+            update(Folder)
+            .where(Folder.id == folder_id)
+            .values(is_deleted=False, deleted_at=None)
+        )
         
+        # Restauration cascade contenu
         if recursive:
             
             await FolderService._restore_contents_recursive(db, folder_id)
@@ -278,7 +288,7 @@ class FolderService:
             "files": {}  
         }
         
-        
+        # Construction récursive arborescence pour ZIP
         await FolderService._add_folder_contents_to_result(db, folder_id, result["files"], "")
         
         return result
@@ -288,7 +298,7 @@ class FolderService:
         """
         Fonction auxiliaire récursive pour construire la structure de téléchargement
         """
-        
+        # Parcours récursif avec préservation chemins relatifs
         files = db.execute(
             select(File).where(
                 File.folder_id == folder_id,
@@ -298,7 +308,7 @@ class FolderService:
         
         
         for file in files:
-            file_path = os.path.join(current_path, file.name)
+            file_path = os.path.join(current_path, str(file.name))
             files_dict[file_path] = {
                 "name": file.name,
                 "path": file.storage_path,
@@ -306,7 +316,7 @@ class FolderService:
                 "mime_type": file.mime_type
             }
         
-        
+        # Descente récursive sous-dossiers
         subfolders = db.execute(
             select(Folder).where(
                 Folder.parent_id == folder_id,
@@ -316,7 +326,7 @@ class FolderService:
         
         
         for subfolder in subfolders:
-            subfolder_path = os.path.join(current_path, subfolder.name)
+            subfolder_path = os.path.join(current_path, str(subfolder.name))
             await FolderService._add_folder_contents_to_result(db, subfolder.id, files_dict, subfolder_path)
     
     @staticmethod
@@ -373,8 +383,11 @@ class FolderService:
         
         
         for subfolder in subfolders:
-            subfolder.is_deleted = True
-            subfolder.deleted_at = now
+            db.execute(
+                update(Folder)
+                .where(Folder.id == subfolder.id)
+                .values(is_deleted=True, deleted_at=now)
+            )
             
             
             await FolderService._mark_as_deleted_recursive(db, subfolder.id)
@@ -401,8 +414,11 @@ class FolderService:
         
         
         for subfolder in subfolders:
-            subfolder.is_deleted = False
-            subfolder.deleted_at = None
+            db.execute(
+                update(Folder)
+                .where(Folder.id == subfolder.id)
+                .values(is_deleted=False, deleted_at=None)
+            )
             
             
             await FolderService._restore_contents_recursive(db, subfolder.id)

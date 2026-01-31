@@ -1,14 +1,20 @@
 services:
+  # ==========================================================================
+  # SERVICE 1 : BASE DE DONNÉES POSTGRESQL
+  # ==========================================================================
   postgres:
     image: postgres:15-alpine
     container_name: supfile_postgres
     restart: unless-stopped
+    
+    # Variables d'initialisation PostgreSQL
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-supfile_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-supfile_password}
       POSTGRES_DB: ${POSTGRES_DB:-supfile_db}
+
     ports:
-      - "5432:5432"
+      - "5432:5432"    
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -19,59 +25,93 @@ services:
       timeout: 5s
       retries: 5
 
+  # ==========================================================================
+  # SERVICE 2 : BACKEND FASTAPI
+  # ==========================================================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: supfile_backend
     restart: unless-stopped
+    
     environment:
+      # Connexion BDD
       DATABASE_URL: postgresql://${POSTGRES_USER:-supfile_user}:${POSTGRES_PASSWORD:-supfile_password}@postgres:5432/${POSTGRES_DB:-supfile_db}
+      
+      # Sécurité JWT
       SECRET_KEY: ${SECRET_KEY:-dev_secret_key_change_in_production}
       ALGORITHM: ${ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      
+      # OAuth2 Google
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+      
+      # Stockage fichiers
       UPLOAD_DIR: /app/uploads
       MAX_FILE_SIZE: ${MAX_FILE_SIZE:-5368709120}
       STORAGE_QUOTA: ${STORAGE_QUOTA:-32212254720}
+    
     ports:
       - "8000:8000"
+    
     volumes:
       - ./backend:/app
       - uploads_data:/app/uploads
+    
     depends_on:
       postgres:
         condition: service_healthy
+    
     networks:
       - supfile_network
+    
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+  # ==========================================================================
+  # SERVICE 3 : FRONTEND REACT + NGINX
+  # ==========================================================================
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      # Variables build-time pour compilation Vite (baked into JS bundle)
       args:
         VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     container_name: supfile_frontend
     restart: unless-stopped
+    
+    # Exposition application web
     ports:
       - "3000:80"
+    
+    # Ordre démarrage (frontend nécessite backend opérationnel)
     depends_on:
       - backend
+    
     networks:
       - supfile_network
-      
+
+# ============================================================================
+# VOLUMES PERSISTANTS
+# ============================================================================
 volumes:
+  # Données PostgreSQL (tables, index, etc.)
   postgres_data:
     driver: local
     name: supfile_postgres_data
+  
+  # Fichiers uploadés par utilisateurs
   uploads_data:
     driver: local
     name: supfile_uploads_data
 
+# ============================================================================
+# RÉSEAU INTERNE
+# ============================================================================
 networks:
   supfile_network:
     driver: bridge
