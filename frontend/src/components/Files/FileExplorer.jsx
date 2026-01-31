@@ -132,6 +132,8 @@ const FileExplorer = ({ searchQuery = '' }) => {
     
     setDraggedItem(dragData);
     
+    document.body.classList.add('dragging');
+    
     setTimeout(() => {
       e.target.style.opacity = '0.4';
     }, 0);
@@ -142,6 +144,8 @@ const FileExplorer = ({ searchQuery = '' }) => {
     e.target.style.opacity = '1';
     setDraggedItem(null);
     setDragOverFolder(null);
+
+    document.body.classList.remove('dragging'); 
   };
 
   const handleDragOver = (e, folder) => {
@@ -313,9 +317,8 @@ const FileExplorer = ({ searchQuery = '' }) => {
     setShowMoveModal(true);
   };
 
-  const handleUploadComplete = () => {
-    fetchContents(currentFolder?.id || null);
-    window.location.reload();
+  const handleUploadComplete = async () => {
+    await fetchContents(currentFolder?.id || null);
   };
 
   if (loading) return <Loading />;

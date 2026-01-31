@@ -63,6 +63,14 @@ body {
   border-bottom: none;
   box-shadow: var(--shadow-lg);
   padding: 0.75rem 1.5rem;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Désactiver complètement le header pendant le drag */
+body.dragging .modern-navbar {
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
 
 .modern-navbar .navbar-brand {
